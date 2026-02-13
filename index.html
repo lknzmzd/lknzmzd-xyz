@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LKNZMZD</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+  <!-- Background -->
+  <div id="bg">
+    <canvas id="c"></canvas>
+  </div>
+
+  <!-- Robots (SVG overlays) -->
+  <div class="bot bot--left" aria-hidden="true">
+    <svg class="bot__svg" viewBox="0 0 120 140">
+      <line x1="60" y1="10" x2="60" y2="22" />
+      <circle cx="60" cy="8" r="4" class="chest" />
+      <rect x="30" y="22" width="60" height="40" rx="10" />
+      <circle cx="48" cy="42" r="5" class="eye" />
+      <circle cx="72" cy="42" r="5" class="eye" />
+      <line x1="45" y1="54" x2="75" y2="54" />
+      <rect x="26" y="66" width="68" height="52" rx="14" />
+      <rect x="52" y="84" width="16" height="16" rx="4" class="chest" />
+      <line x1="26" y1="80" x2="10" y2="92" />
+      <line x1="94" y1="80" x2="110" y2="92" />
+      <line x1="45" y1="118" x2="40" y2="134" />
+      <line x1="75" y1="118" x2="80" y2="134" />
+    </svg>
+  </div>
+
+  <div class="bot bot--right" aria-hidden="true">
+    <svg class="bot__svg" viewBox="0 0 120 140">
+      <line x1="60" y1="10" x2="60" y2="22" />
+      <circle cx="60" cy="8" r="4" class="chest" />
+      <rect x="30" y="22" width="60" height="40" rx="10" />
+      <circle cx="48" cy="42" r="5" class="eye" />
+      <circle cx="72" cy="42" r="5" class="eye" />
+      <line x1="45" y1="54" x2="75" y2="54" />
+      <rect x="26" y="66" width="68" height="52" rx="14" />
+      <rect x="52" y="84" width="16" height="16" rx="4" class="chest" />
+      <line x1="26" y1="80" x2="10" y2="92" />
+      <line x1="94" y1="80" x2="110" y2="92" />
+      <line x1="45" y1="118" x2="40" y2="134" />
+      <line x1="75" y1="118" x2="80" y2="134" />
+    </svg>
+  </div>
+
+  <!-- Content -->
+  <main class="shell">
+    <div class="card">
+      <h1>LKNZMZD</h1>
+      <p class="tag">Embedded Systems • Robotics • Electro-Mechanical</p>
+      <p class="desc">
+        Engineering graduate building experimental hardware systems —
+        robotics, automation and embedded devices.
+      </p>
+
+
+      <div class="links">
+        <a href="https://www.lknzmzd.com/" target="_blank" rel="noopener">
+            Engineering Lab
+        </a>
+
+        <a href="https://www.lknzmzd.net" target="_blank" rel="noopener">
+            Portfolio / CV
+        </a>
+
+        <a href="https://instagram.com/lknzmzdx" target="_blank" rel="noopener">
+            Instagram Projects
+        </a>
+
+        <a href="https://instagram.com/lknzmzdlab" target="_blank" rel="noopener">
+            Instagram Lab
+        </a>
+
+        <a href="https://youtube.com/@Lknzmzd" target="_blank" rel="noopener">
+            YouTube
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Importmap for three.js (CDN) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.161.0/build/three.module.js"
+    }
+  }
+  </script>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
