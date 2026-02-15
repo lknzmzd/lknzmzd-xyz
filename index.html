@@ -58,6 +58,27 @@
 </head>
 
 <body>
+
+  <!-- ✅ INTRO LOADER (MECHANICAL) -->
+  <div id="intro" aria-label="Intro loader">
+    <div class="intro-inner">
+      <div class="intro-mark" aria-hidden="true"></div>
+      <h1 class="intro-title">LKNZMZD</h1>
+      <p class="intro-sub">BOOTING LAB SYSTEMS</p>
+
+      <div class="intro-bar" aria-hidden="true">
+        <span class="intro-fill"></span>
+      </div>
+
+      <!-- Sound requires user interaction (browser rule) -->
+      <button id="enableSound" class="intro-btn" type="button">
+        Enable startup sound
+      </button>
+
+      <small class="intro-note">First click enables audio (browser rule)</small>
+    </div>
+  </div>
+
   <!-- Background -->
   <div id="bg" aria-hidden="true">
     <canvas id="c"></canvas>
@@ -111,61 +132,41 @@
       </header>
 
       <nav class="links" aria-label="Primary links">
-        <a href="https://www.lknzmzd.com/" target="_blank" rel="noopener noreferrer">
-          Engineering Lab
-        </a>
-
-        <a href="https://www.lknzmzd.net" target="_blank" rel="noopener noreferrer">
-          Portfolio / CV
-        </a>
-
-        <a href="https://instagram.com/lknzmzdx" target="_blank" rel="noopener noreferrer">
-          Instagram Projects
-        </a>
-
-        <a href="https://instagram.com/lknzmzdlab" target="_blank" rel="noopener noreferrer">
-          Instagram Lab
-        </a>
-
-        <a href="https://youtube.com/@Lknzmzd" target="_blank" rel="noopener noreferrer">
-          YouTube
-        </a>
+        <a href="https://www.lknzmzd.com/" target="_blank" rel="noopener noreferrer">Engineering Lab</a>
+        <a href="https://www.lknzmzd.net" target="_blank" rel="noopener noreferrer">Portfolio / CV</a>
+        <a href="https://instagram.com/lknzmzdx" target="_blank" rel="noopener noreferrer">Instagram Projects</a>
+        <a href="https://instagram.com/lknzmzdlab" target="_blank" rel="noopener noreferrer">Instagram Lab</a>
+        <a href="https://youtube.com/@Lknzmzd" target="_blank" rel="noopener noreferrer">YouTube</a>
       </nav>
 
-      <!-- SEO content (helps Google understand what this site is about) -->
-      <section class="seo-section" aria-label="About and focus areas">
+      <!-- SEO content -->
+      <section class="seo-section sr-only" aria-label="About and focus areas">
         <h2>About LKNZMZD Engineering Lab</h2>
         <p>
-          LKNZMZD is an independent robotics and embedded systems engineering lab founded by
-          <strong>Ilkin Azimzade</strong>. The lab focuses on electro-mechanical prototyping,
-          motion systems, smart automation devices, and experimental robotic platforms.
+            LKNZMZD is an independent robotics and embedded systems engineering lab founded by
+            <strong>Ilkin Azimzade</strong>. The lab focuses on electro-mechanical prototyping,
+            motion systems, smart automation devices, and experimental robotic platforms.
         </p>
 
         <h2>Core Focus Areas</h2>
         <ul>
-          <li>Robotics prototypes (humanoid systems, kinetic mechanisms)</li>
-          <li>Embedded systems engineering and firmware development</li>
-          <li>Servo control, motion design, and electro-mechanical integration</li>
-          <li>AI + hardware experiments (edge computing, perception prototypes)</li>
-          <li>Rapid prototyping with 3D printing and custom parts</li>
+            <li>Robotics prototypes (humanoid systems, kinetic mechanisms)</li>
+            <li>Embedded systems engineering and firmware development</li>
+            <li>Servo control, motion design, and electro-mechanical integration</li>
+            <li>AI + hardware experiments (edge computing, perception prototypes)</li>
+            <li>Rapid prototyping with 3D printing and custom parts</li>
         </ul>
 
         <h2>Tools & Technologies</h2>
         <p>
-          Arduino, ESP32, Raspberry Pi, NVIDIA Jetson, sensors and actuators, 3D printing workflows,
-          and web-based interactive demos (Three.js).
-        </p>
-
-        <p class="seo-note">
-          Looking for collaborations, engineering work, or project partnerships?
-          Use the links above to reach the lab and explore ongoing builds.
+            Arduino, ESP32, Raspberry Pi, NVIDIA Jetson, sensors and actuators, 3D printing workflows,
+            and web-based interactive demos (Three.js).
         </p>
       </section>
 
+
       <footer class="footer">
-        <p>
-          <small>© <span id="y"></span> LKNZMZD • Built for fast, minimal, robotics-focused presentation.</small>
-        </p>
+        <p><small>© <span id="y"></span> LKNZMZD • Built for fast, minimal, robotics-focused presentation.</small></p>
       </footer>
     </article>
   </main>
@@ -180,10 +181,11 @@
   </script>
 
   <script>
-    // footer year (tiny, no SEO impact, just polish)
+    // footer year
     document.getElementById("y").textContent = new Date().getFullYear();
   </script>
 
+  <!-- main.js (contains loader hide + servo sound + three background) -->
   <script type="module" src="./main.js"></script>
 </body>
 </html>

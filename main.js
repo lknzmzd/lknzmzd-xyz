@@ -1,206 +1,214 @@
 // main.js
+// LKNZMZD — Mechanical loader + subtle servo startup sound + Three.js background
 import * as THREE from "three";
 
-console.log("LKNZMZD background running ✅");
+console.log("LKNZMZD main.js running ✅");
+
+/* =========================
+   1) INTRO LOADER CONTROL
+   ========================= */
+
+const introEl = document.getElementById("intro");
+const soundBtn =
+  document.getElementById("enableSound") ||
+  document.getElementById("introSoundBtn") ||
+  document.getElementById("introSound") ||
+  null;
+
+/**
+ * Subtle “servo startup” using WebAudio (no external files).
+ * Note: browsers require a user gesture to play sound.
+ */
+function playServoStart() {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return;
+
+  const ctx = new AudioCtx();
+
+  // master output (subtle volume)
+  const master = ctx.createGain();
+  master.gain.value = 0.18;
+  master.connect(ctx.destination);
+
+  // motor hum
+  const osc = ctx.createOscillator();
+  osc.type = "triangle";
+  osc.frequency.setValueAtTime(70, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(170, ctx.currentTime + 0.18);
+  osc.frequency.exponentialRampToValueAtTime(95, ctx.currentTime + 0.55);
+
+  // envelope
+  const env = ctx.createGain();
+  env.gain.setValueAtTime(0.0, ctx.currentTime);
+  env.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.03);
+  env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.75);
+
+  osc.connect(env);
+  env.connect(master);
+
+  // gear “engage” noise burst
+  const bufferSize = Math.floor(ctx.sampleRate * 0.12);
+  const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.6;
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = noiseBuffer;
+
+  const noiseFilter = ctx.createBiquadFilter();
+  noiseFilter.type = "bandpass";
+  noiseFilter.frequency.value = 900;
+  noiseFilter.Q.value = 2.2;
+
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0.0, ctx.currentTime);
+  noiseGain.gain.linearRampToValueAtTime(0.30, ctx.currentTime + 0.01);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+
+  noise.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(master);
+
+  osc.start();
+  noise.start();
+  osc.stop(ctx.currentTime + 0.8);
+  noise.stop(ctx.currentTime + 0.13);
+
+  setTimeout(() => ctx.close().catch(() => {}), 1200);
+}
+
+if (soundBtn) {
+  soundBtn.addEventListener("click", () => {
+    playServoStart();
+    soundBtn.textContent = "Sound enabled ✓";
+    soundBtn.disabled = true;
+    soundBtn.style.opacity = "0.65";
+    soundBtn.style.cursor = "default";
+  });
+}
+
+// Hide loader after window load (matches CSS animation ~2.2s)
+window.addEventListener("load", () => {
+  if (!introEl) return;
+  setTimeout(() => {
+    introEl.classList.add("hidden");
+  }, 2400);
+});
+
+/* =========================
+   2) THREE.JS BACKGROUND
+   ========================= */
 
 const canvas = document.getElementById("c");
-
-// -------------------- Renderer --------------------
-const renderer = new THREE.WebGLRenderer({
-  canvas,
-  antialias: true,
-  alpha: true,
-});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight, false);
-
-// -------------------- Scene + Camera --------------------
-const scene = new THREE.Scene();
-
-const camera = new THREE.PerspectiveCamera(
-  55,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  300
-);
-camera.position.set(0, 0, 10);
-
-// -------------------- Materials (subtle, background-friendly) --------------------
-const matWire = new THREE.MeshBasicMaterial({
-  wireframe: true,
-  transparent: true,
-  opacity: 0.22,
-});
-
-const matSoft = new THREE.MeshBasicMaterial({
-  transparent: true,
-  opacity: 0.18,
-});
-
-const matSolid = new THREE.MeshBasicMaterial({
-  transparent: true,
-  opacity: 0.28,
-});
-
-// -------------------- Core (wire) --------------------
-const coreGeo = new THREE.IcosahedronGeometry(4.2, 3);
-const core = new THREE.Mesh(coreGeo, matWire);
-scene.add(core);
-
-// -------------------- Ring --------------------
-const ringGeo = new THREE.TorusGeometry(2.8, 0.02, 10, 220);
-const ring = new THREE.Mesh(ringGeo, matSoft);
-ring.rotation.x = Math.PI / 2.2;
-scene.add(ring);
-
-// -------------------- Stars / Particles --------------------
-const COUNT = 1600;
-const positions = new Float32Array(COUNT * 3);
-for (let i = 0; i < COUNT; i++) {
-  const i3 = i * 3;
-  positions[i3 + 0] = (Math.random() - 0.5) * 28;
-  positions[i3 + 1] = (Math.random() - 0.5) * 18;
-  positions[i3 + 2] = (Math.random() - 0.5) * 28;
-}
-const pGeo = new THREE.BufferGeometry();
-pGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-
-const pMat = new THREE.PointsMaterial({
-  size: 0.02,
-  transparent: true,
-  opacity: 0.55,
-});
-const stars = new THREE.Points(pGeo, pMat);
-scene.add(stars);
-
-// -------------------- Robot Builder (simple geometry robot) --------------------
-function makeRobot() {
-  const g = new THREE.Group();
-
-  // Body
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.1, 0.5), matSolid);
-  body.position.y = 0.0;
-  g.add(body);
-
-  // Head
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.55, 0.5), matSolid);
-  head.position.y = 0.95;
-  g.add(head);
-
-  // Eyes
-  const eyeMat = new THREE.MeshBasicMaterial({
-    transparent: true,
-    opacity: 0.45,
+if (!canvas) {
+  console.warn("Canvas #c not found. Three.js background skipped.");
+} else {
+  // Renderer
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    alpha: true,
+    powerPreference: "high-performance",
   });
-  const eyeGeo = new THREE.SphereGeometry(0.06, 10, 10);
-  const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
-  const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
-  eyeL.position.set(-0.18, 0.98, 0.27);
-  eyeR.position.set(0.18, 0.98, 0.27);
-  g.add(eyeL, eyeR);
 
-  // Antenna
-  const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.35, 10), matWire);
-  ant.position.set(0, 1.33, 0);
-  g.add(ant);
-  const antTip = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), matSoft);
-  antTip.position.set(0, 1.52, 0);
-  g.add(antTip);
-
-  // Arms (separate groups for animation)
-  const armGeo = new THREE.BoxGeometry(0.18, 0.7, 0.18);
-
-  const armL = new THREE.Group();
-  const armLMesh = new THREE.Mesh(armGeo, matWire);
-  armLMesh.position.y = -0.2;
-  armL.add(armLMesh);
-  armL.position.set(-0.62, 0.35, 0);
-  g.add(armL);
-
-  const armR = new THREE.Group();
-  const armRMesh = new THREE.Mesh(armGeo, matWire);
-  armRMesh.position.y = -0.2;
-  armR.add(armRMesh);
-  armR.position.set(0.62, 0.35, 0);
-  g.add(armR);
-
-  // Legs
-  const legGeo = new THREE.BoxGeometry(0.22, 0.55, 0.22);
-  const legL = new THREE.Mesh(legGeo, matWire);
-  const legR = new THREE.Mesh(legGeo, matWire);
-  legL.position.set(-0.22, -0.95, 0);
-  legR.position.set(0.22, -0.95, 0);
-  g.add(legL, legR);
-
-  // Store refs for animation
-  g.userData = { armL, armR, head };
-
-  return g;
-}
-
-// -------------------- Add TWO robots (left + right) --------------------
-const robotLeft = makeRobot();
-robotLeft.position.set(-7.2, -0.6, -2.0);
-robotLeft.scale.setScalar(1.05);
-scene.add(robotLeft);
-
-const robotRight = makeRobot();
-robotRight.position.set(7.2, -0.6, -2.0);
-robotRight.scale.setScalar(1.05);
-// mirror a bit so it "faces" inward
-robotRight.rotation.y = Math.PI;
-scene.add(robotRight);
-
-// -------------------- Resize --------------------
-function onResize() {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  renderer.setSize(w, h, false);
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-}
-window.addEventListener("resize", onResize);
-
-// -------------------- Animate --------------------
-const clock = new THREE.Clock();
-
-function animateRobot(robot, t, side = 1) {
-  // Float (up/down) + tiny sway
-  robot.position.y = -0.6 + Math.sin(t * 1.1 + side) * 0.25;
-  robot.rotation.z = Math.sin(t * 0.7 + side) * 0.06;
-
-  // Head nod
-  if (robot.userData?.head) {
-    robot.userData.head.rotation.y = Math.sin(t * 0.9 + side) * 0.25;
-    robot.userData.head.rotation.x = Math.sin(t * 0.6 + side) * 0.12;
+  // Adaptive DPR (keeps it smooth on weaker devices)
+  function getDpr() {
+    const dpr = window.devicePixelRatio || 1;
+    return Math.min(dpr, 2);
   }
 
-  // Arm wave (opposite phase)
-  if (robot.userData?.armL && robot.userData?.armR) {
-    robot.userData.armL.rotation.z = Math.sin(t * 1.6 + side) * 0.55;
-    robot.userData.armR.rotation.z = Math.sin(t * 1.6 + side + Math.PI) * 0.55;
+  renderer.setPixelRatio(getDpr());
+  renderer.setSize(window.innerWidth, window.innerHeight, false);
+
+  // Scene + Camera
+  const scene = new THREE.Scene();
+
+  const camera = new THREE.PerspectiveCamera(
+    55,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    200
+  );
+
+  // Slightly closer so the “earth/core” feels bigger
+  camera.position.set(0, 0, 6.2);
+
+  // --- “Core” wireframe (your “earth” vibe)
+  const coreGeo = new THREE.IcosahedronGeometry(2.85, 4); // bigger + smoother
+  const coreMat = new THREE.MeshBasicMaterial({
+    wireframe: true,
+    transparent: true,
+    opacity: 0.24,
+  });
+  const core = new THREE.Mesh(coreGeo, coreMat);
+  scene.add(core);
+
+  // --- Secondary ring
+  const ringGeo = new THREE.TorusGeometry(3.35, 0.03, 12, 260);
+  const ringMat = new THREE.MeshBasicMaterial({
+    transparent: true,
+    opacity: 0.18,
+  });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = Math.PI / 2.2;
+  scene.add(ring);
+
+  // --- Particles
+  const COUNT = 1800;
+  const positions = new Float32Array(COUNT * 3);
+  for (let i = 0; i < COUNT; i++) {
+    const i3 = i * 3;
+    positions[i3 + 0] = (Math.random() - 0.5) * 24;
+    positions[i3 + 1] = (Math.random() - 0.5) * 16;
+    positions[i3 + 2] = (Math.random() - 0.5) * 24;
   }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+
+  const pMat = new THREE.PointsMaterial({
+    size: 0.02,
+    transparent: true,
+    opacity: 0.55,
+  });
+
+  const stars = new THREE.Points(pGeo, pMat);
+  scene.add(stars);
+
+  // Resize
+  function onResize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    renderer.setPixelRatio(getDpr());
+    renderer.setSize(w, h, false);
+
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener("resize", onResize);
+
+  // Animate
+  const clock = new THREE.Clock();
+
+  // Optional: reduce motion if user prefers reduced motion
+  const prefersReducedMotion =
+    window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function tick() {
+    const t = clock.getElapsedTime();
+
+    if (!prefersReducedMotion) {
+      core.rotation.y = t * 0.20;
+      core.rotation.x = t * 0.11;
+
+      ring.rotation.z = t * 0.14;
+      stars.rotation.y = t * 0.02;
+    }
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+
+  tick();
 }
-
-function tick() {
-  const t = clock.getElapsedTime();
-
-  // Core motion
-  core.rotation.y = t * 0.22;
-  core.rotation.x = t * 0.12;
-
-  ring.rotation.z = t * 0.15;
-
-  // Stars drift
-  stars.rotation.y = t * 0.02;
-  stars.rotation.x = t * 0.006;
-
-  // Robots animate
-  animateRobot(robotLeft, t, 1);
-  animateRobot(robotRight, t, -1);
-
-  renderer.render(scene, camera);
-  requestAnimationFrame(tick);
-}
-
-tick();
