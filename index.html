@@ -3,17 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LKNZMZD</title>
+
+  <title>LKNZMZD | Robotics & Embedded Systems Engineering Lab</title>
+
+  <meta name="description" content="LKNZMZD is an engineering lab by Ilkin Azimzade focused on robotics, embedded systems, automation and experimental hardware development. Explore projects, portfolio and lab experiments.">
+
+  <meta name="keywords" content="LKNZMZD, Ilkin Azimzade, robotics, embedded systems, automation, engineering lab, electro-mechanical systems">
+
+  <meta name="author" content="Ilkin Azimzade">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://lknzmzd.xyz/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="LKNZMZD | Robotics & Embedded Systems">
+  <meta property="og:description" content="Engineering lab focused on robotics, automation and embedded systems.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://lknzmzd.xyz/">
+  <meta property="og:image" content="https://lknzmzd.xyz/preview.jpg">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="LKNZMZD">
+  <meta name="twitter:description" content="Robotics, embedded systems and engineering experiments.">
+
   <link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
+
   <!-- Background -->
   <div id="bg">
     <canvas id="c"></canvas>
   </div>
 
-  <!-- Robots (SVG overlays) -->
+  <!-- Robots -->
   <div class="bot bot--left" aria-hidden="true">
     <svg class="bot__svg" viewBox="0 0 120 140">
       <line x1="60" y1="10" x2="60" y2="22" />
@@ -51,40 +74,64 @@
   <!-- Content -->
   <main class="shell">
     <div class="card">
-      <h1>LKNZMZD</h1>
-      <p class="tag">Embedded Systems • Robotics • Electro-Mechanical</p>
-      <p class="desc">
-        Engineering graduate building experimental hardware systems —
-        robotics, automation and embedded devices.
+      <h1>LKNZMZD Engineering Lab</h1>
+
+      <p class="tag">
+        Embedded Systems • Robotics • Electro-Mechanical Engineering
       </p>
 
+      <p class="desc">
+        LKNZMZD is an experimental engineering lab by Ilkin Azimzade,
+        focused on robotics, automation, embedded systems and advanced
+        hardware development.
+      </p>
 
       <div class="links">
         <a href="https://www.lknzmzd.com/" target="_blank" rel="noopener">
-            Engineering Lab
+          Engineering Lab
         </a>
 
         <a href="https://www.lknzmzd.net" target="_blank" rel="noopener">
-            Portfolio / CV
+          Portfolio / CV
         </a>
 
         <a href="https://instagram.com/lknzmzdx" target="_blank" rel="noopener">
-            Instagram Projects
+          Instagram Projects
         </a>
 
         <a href="https://instagram.com/lknzmzdlab" target="_blank" rel="noopener">
-            Instagram Lab
+          Instagram Lab
         </a>
 
         <a href="https://youtube.com/@Lknzmzd" target="_blank" rel="noopener">
-            YouTube
+          YouTube
         </a>
       </div>
-
     </div>
   </main>
 
-  <!-- Importmap for three.js (CDN) -->
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Ilkin Azimzade",
+    "url": "https://lknzmzd.xyz",
+    "jobTitle": "Robotics & Embedded Systems Engineer",
+    "sameAs": [
+      "https://www.instagram.com/lknzmzdx/",
+      "https://www.instagram.com/lknzmzdlab/",
+      "https://github.com/lknzmzd",
+      "https://www.youtube.com/@Lknzmzd"
+    ],
+    "worksFor": {
+      "@type": "Organization",
+      "name": "LKNZMZD Engineering Lab"
+    }
+  }
+  </script>
+
+  <!-- three.js import -->
   <script type="importmap">
   {
     "imports": {
@@ -94,5 +141,6 @@
   </script>
 
   <script type="module" src="./main.js"></script>
+
 </body>
 </html>
