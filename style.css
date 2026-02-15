@@ -322,3 +322,62 @@ body {
   white-space: nowrap !important;
   border: 0 !important;
 }
+
+
+h1 {
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 6px;
+    font-weight: 700;
+    }
+
+    body {
+    font-family: 'Inter', sans-serif;
+    }
+
+    .card {
+  background: rgba(10, 15, 25, 0.75);
+  border: 1px solid rgba(0, 188, 212, 0.15);
+  backdrop-filter: blur(12px);
+  box-shadow: 
+    0 0 40px rgba(0, 188, 212, 0.08),
+    inset 0 0 20px rgba(255, 255, 255, 0.02);
+}
+
+
+.links a {
+  transition: all 0.25s ease;
+}
+
+.links a:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 15px rgba(0,188,212,0.3);
+}
+
+
+.footer {
+  margin-top: 40px;
+  text-align: center;
+  opacity: 0.8;
+}
+
+.footer small {
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+}
+
+.divider {
+  margin: 0 10px;
+  opacity: 0.4;
+}
+
+.doctrine-link {
+  text-decoration: none;
+  color: inherit;
+  opacity: 0.6;
+  transition: opacity 0.3s ease, letter-spacing 0.3s ease;
+}
+
+.doctrine-link:hover {
+  opacity: 1;
+  letter-spacing: 3px;
+}
