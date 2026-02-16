@@ -4,230 +4,173 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LKNZMZD — Division Doctrine</title>
-  <meta name="description" content="LKNZMZD Division Doctrine — principles, standards, and engineering identity." />
-  <link rel="canonical" href="https://lknzmzd.xyz/division.html" />
-
-  <!-- Fonts (same as main site) -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-
+  <link rel="stylesheet" href="./style.css" />
   <style>
-    :root{
-      --bg:#070a0f;
-      --text:rgba(255,255,255,0.88);
-      --muted:rgba(255,255,255,0.62);
-      --line:rgba(255,255,255,0.08);
-      --accent:rgba(110,231,255,0.85);
+    body{ overflow:auto; }
+    .doc-wrap{
+      position: relative;
+      z-index: 2;
+      max-width: 980px;
+      margin: 90px auto;
+      padding: 0 18px 70px;
     }
-
-    body{
-      margin:0;
-      background: radial-gradient(900px 600px at 50% -10%, rgba(110,231,255,0.06), rgba(0,0,0,0)) , var(--bg);
-      color:var(--text);
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      line-height:1.75;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: geometricPrecision;
-    }
-
-    .wrap{
-      width:min(860px, calc(100% - 36px));
-      margin: 90px auto 70px;
-    }
-
-    header{
-      border-bottom: 1px solid var(--line);
-      padding-bottom: 18px;
-      margin-bottom: 28px;
-    }
-
-    .brand{
-      font-family: Orbitron, sans-serif;
-      letter-spacing: 0.34em;
-      text-transform: uppercase;
-      font-weight: 700;
-      margin: 0 0 10px;
-      font-size: 1.8rem;
-    }
-
-    .sub{
-      color: var(--muted);
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      font-size: 0.78rem;
-      margin: 0;
-    }
-
     .doc{
-      margin-top: 26px;
+      background: rgba(10, 15, 25, 0.72);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 22px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 26px 80px rgba(0,0,0,0.55);
+      padding: 26px 22px;
     }
-
-    .sec{
-      padding: 20px 0;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .sec:last-child{
-      border-bottom: none;
-    }
-
-    h2{
-      margin: 0 0 10px;
-      font-size: 0.92rem;
-      letter-spacing: 0.20em;
+    .doc h1{
+      font-family: 'Orbitron', system-ui, sans-serif;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.82);
-    }
-
-    p{
       margin: 0 0 12px;
+    }
+    .doc h2{
+      font-family: 'Orbitron', system-ui, sans-serif;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-size: 14px;
+      opacity: 0.85;
+      margin-top: 22px;
+    }
+    .doc p, .doc li{
       color: rgba(255,255,255,0.78);
+      line-height: 1.65;
+      font-size: 15px;
     }
-
-    ul{
-      margin: 10px 0 0 18px;
-      color: rgba(255,255,255,0.76);
-    }
-
-    .sig{
-      margin-top: 26px;
-      color: rgba(255,255,255,0.72);
-      letter-spacing: 0.06em;
-    }
-
     .back{
       display:inline-block;
-      margin-top: 26px;
+      margin-bottom: 14px;
       text-decoration:none;
-      color: rgba(255,255,255,0.72);
-      border-bottom: 1px solid rgba(255,255,255,0.16);
-      padding-bottom: 2px;
-      transition: color 160ms ease, border-color 160ms ease;
-    }
-
-    .back:hover{
-      color: rgba(255,255,255,0.92);
-      border-color: rgba(110,231,255,0.38);
-    }
-
-    footer{
-      margin-top: 22px;
-      color: rgba(255,255,255,0.45);
-      font-size: 12px;
+      color: rgba(255,255,255,0.86);
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-family: 'Orbitron', system-ui, sans-serif;
       letter-spacing: 0.12em;
       text-transform: uppercase;
+      font-size: 12px;
     }
+    .back:hover{ border-color: rgba(110,231,255,0.30); }
   </style>
 </head>
-
 <body>
-  <main class="wrap">
-    <header>
-      <h1 class="brand">LKNZMZD</h1>
-      <p class="sub">Elite Mechanical Systems Division — Brand Doctrine</p>
-    </header>
+  <div id="bg" aria-hidden="true"><canvas id="c"></canvas></div>
 
-    <section class="doc">
+  <div class="doc-wrap">
+    <a class="back" href="./index.html">← Return</a>
 
-      <div class="sec">
-        <h2>1. Origin</h2>
-        <p>
-          LKNZMZD was not created to publish projects. It was built to engineer systems.
-          In a world flooded with abstraction, it operates at the physical layer — where motion, force,
-          signal, and material converge.
-        </p>
-        <p>
-          We design what moves. We control what reacts. We build what operates in reality.
-        </p>
-      </div>
+    <article class="doc">
+      <h1>Division Doctrine</h1>
+      <p><b>LKNZMZD — Elite Mechanical Systems Division</b></p>
 
-      <div class="sec">
-        <h2>2. Philosophy</h2>
-        <p>Precision over noise. Execution over talk. Systems over trends.</p>
-        <p>
-          LKNZMZD rejects decorative engineering. Every build has purpose. Every mechanism has intent.
-          Every circuit serves motion. If it does not move, compute, sense, or control — it does not belong.
-        </p>
-      </div>
+      <h2>Origin</h2>
+      <p>
+        LKNZMZD was not created to publish projects. It was built to engineer systems.
+        In a world flooded with simulation and abstraction, LKNZMZD exists at the physical layer —
+        where motion, force, signal, and material converge.
+      </p>
 
-      <div class="sec">
-        <h2>3. Discipline</h2>
-        <ul>
-          <li>Embedded architectures</li>
-          <li>Electro-mechanical integration</li>
-          <li>Motion control systems</li>
-          <li>Autonomous robotics</li>
-          <li>Cyber-physical prototyping</li>
-        </ul>
-        <p class="sig">Hardware is structural logic translated into matter.</p>
-      </div>
+      <h2>Philosophy</h2>
+      <ul>
+        <li>Precision over noise.</li>
+        <li>Execution over talk.</li>
+        <li>Systems over trends.</li>
+      </ul>
 
-      <div class="sec">
-        <h2>4. Identity</h2>
-        <p>
-          LKNZMZD is not a hobby lab. It is an independent engineering division — lean, minimal, high-control.
-          No distraction. No exaggerated claims. Systems speak for themselves.
-        </p>
-      </div>
+      <h2>Discipline</h2>
+      <p>
+        Embedded architectures • Electro-mechanical integration • Motion control systems • Autonomous robotics • Cyber-physical prototyping.
+      </p>
 
-      <div class="sec">
-        <h2>5. Standards</h2>
-        <ul>
-          <li>Mechanical integrity</li>
-          <li>Electrical discipline</li>
-          <li>Firmware architecture</li>
-          <li>Motion efficiency</li>
-          <li>Controlled complexity</li>
-        </ul>
-        <p class="sig">Elegance is achieved through constraint.</p>
-      </div>
+      <h2>Standards</h2>
+      <p>
+        Every build must demonstrate mechanical integrity, maintain electrical discipline,
+        respect firmware architecture, optimize motion efficiency, and reduce unnecessary complexity.
+      </p>
 
-      <div class="sec">
-        <h2>6. Design Code</h2>
-        <p>
-          Visual minimalism reflects structural minimalism. Dark interface. Cold accents.
-          Industrial typography. Controlled motion. A system should feel stable before it proves it.
-        </p>
-      </div>
+      <h2>Direction</h2>
+      <p>
+        Autonomous humanoid platforms • Intelligent electro-mechanical assemblies • Edge-AI + hardware integration • Precision kinetic mechanisms.
+      </p>
 
-      <div class="sec">
-        <h2>7. Commitment</h2>
-        <p>
-          LKNZMZD is committed to long-term system development — iteration, refinement, control.
-          Not trends. Not viral projects. Not decorative robotics.
-        </p>
-      </div>
+      <h2>Closing</h2>
+      <p>
+        Controlled. Engineered. Operational. This is not content. This is infrastructure.
+      </p>
+    </article>
+  </div>
 
-      <div class="sec">
-        <h2>8. Direction</h2>
-        <ul>
-          <li>Autonomous humanoid platforms</li>
-          <li>Intelligent electro-mechanical assemblies</li>
-          <li>Edge-AI + hardware integration</li>
-          <li>Precision kinetic mechanisms</li>
-          <li>High-torque motion architectures</li>
-        </ul>
-        <p class="sig">The goal is capability — not complexity.</p>
-      </div>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.161.0/build/three.module.js"
+    }
+  }
+  </script>
 
-      <div class="sec">
-        <h2>9. Closing Statement</h2>
-        <p>
-          LKNZMZD exists to build systems that function beyond presentation — controlled, engineered, operational.
-          This is not content. This is infrastructure.
-        </p>
+  <!-- reuse the same main background without the intro/diagnostics -->
+  <script type="module">
+    import * as THREE from "three";
+    const canvas = document.getElementById("c");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, powerPreference:"high-performance" });
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    renderer.setPixelRatio(dpr);
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
 
-        <a class="back" href="./index.html">← Return</a>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 200);
+    camera.position.set(0,0,6.2);
 
-        <footer>
-          © <span id="y"></span> LKNZMZD
-        </footer>
-      </div>
+    const coreGeo = new THREE.IcosahedronGeometry(2.85, 4);
+    const coreMat = new THREE.MeshBasicMaterial({ wireframe:true, transparent:true, opacity:0.20 });
+    const core = new THREE.Mesh(coreGeo, coreMat);
+    scene.add(core);
 
-    </section>
-  </main>
+    const ringGeo = new THREE.TorusGeometry(3.35, 0.03, 12, 260);
+    const ringMat = new THREE.MeshBasicMaterial({ transparent:true, opacity:0.14 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI/2.2;
+    scene.add(ring);
 
-  <script>
-    document.getElementById("y").textContent = new Date().getFullYear();
+    const COUNT = 1500;
+    const positions = new Float32Array(COUNT*3);
+    for (let i=0;i<COUNT;i++){
+      const i3=i*3;
+      positions[i3]=(Math.random()-0.5)*24;
+      positions[i3+1]=(Math.random()-0.5)*16;
+      positions[i3+2]=(Math.random()-0.5)*24;
+    }
+    const pGeo=new THREE.BufferGeometry();
+    pGeo.setAttribute("position", new THREE.BufferAttribute(positions,3));
+    const pMat=new THREE.PointsMaterial({ size:0.02, transparent:true, opacity:0.45 });
+    const stars=new THREE.Points(pGeo,pMat);
+    scene.add(stars);
+
+    function onResize(){
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+      renderer.setSize(window.innerWidth, window.innerHeight, false);
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener("resize", onResize);
+
+    const clock = new THREE.Clock();
+    function tick(){
+      const t = clock.getElapsedTime();
+      core.rotation.y = t*0.18;
+      core.rotation.x = t*0.10;
+      ring.rotation.z = t*0.12;
+      stars.rotation.y = t*0.02;
+      renderer.render(scene,camera);
+      requestAnimationFrame(tick);
+    }
+    tick();
   </script>
 </body>
 </html>
