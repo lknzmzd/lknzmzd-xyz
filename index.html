@@ -22,19 +22,18 @@
   <link rel="dns-prefetch" href="//unpkg.com" />
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css" />
+
+  <!-- ✅ Cache-bust CSS while you iterate (change v= when needed) -->
+  <link rel="stylesheet" href="./style.css?v=1.0.2" />
 
   <link rel="manifest" href="/manifest.webmanifest">
-
   <meta name="theme-color" content="#000000">
 
   <!-- iOS PWA support -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LKNZMZD">
-
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
-
 
   <script type="application/ld+json">
   {
@@ -71,49 +70,82 @@
   </div>
 
   <!-- DIAGNOSTICS PANEL -->
-  <aside id="diagPanel" class="diag-panel" aria-hidden="true">
+  <div id="diagPanel" class="diag-panel" aria-hidden="true">
     <div class="diag-head">
-      <div class="diag-title">Diagnostics Mode</div>
-      <button id="diagClose" class="diag-close" type="button" aria-label="Close diagnostics">✕</button>
+      <div class="diag-title">DIAGNOSTICS MODE</div>
+      <button id="diagClose" class="diag-close" type="button" aria-label="Close">×</button>
     </div>
 
     <div class="diag-grid">
-      <div class="diag-card">
-        <div class="k">Renderer</div>
-        <div class="v" id="dRenderer">Three.js</div>
+      <div class="diag-item">
+        <div class="diag-k">Renderer</div>
+        <div class="diag-v" id="dRenderer">—</div>
       </div>
-      <div class="diag-card">
-        <div class="k">DPR</div>
-        <div class="v" id="dDpr">—</div>
+
+      <div class="diag-item">
+        <div class="diag-k">GPU</div>
+        <div class="diag-v" id="dGPU">—</div>
       </div>
-      <div class="diag-card">
-        <div class="k">FPS</div>
-        <div class="v" id="dFps">—</div>
+
+      <div class="diag-item">
+        <div class="diag-k">WebGL</div>
+        <div class="diag-v" id="dWebGL">—</div>
       </div>
-      <div class="diag-card">
-        <div class="k">Reduced Motion</div>
-        <div class="v" id="dPrm">—</div>
+
+      <div class="diag-item">
+        <div class="diag-k">DPR</div>
+        <div class="diag-v" id="dDPR">—</div>
+      </div>
+
+      <div class="diag-item">
+        <div class="diag-k">FPS</div>
+        <div class="diag-v" id="dFPS">—</div>
+      </div>
+
+      <div class="diag-item">
+        <div class="diag-k">Memory</div>
+        <div class="diag-v" id="dMem">—</div>
+      </div>
+
+      <div class="diag-item">
+        <div class="diag-k">Reduced Motion</div>
+        <div class="diag-v" id="dRM">—</div>
+      </div>
+
+      <div class="diag-item">
+        <div class="diag-k">Low Power</div>
+        <div class="diag-v" id="dLP">—</div>
       </div>
     </div>
 
-    <div class="diag-actions">
-      <label class="toggle">
+    <div class="diag-controls">
+      <label class="diag-row">
+        <span>Performance Mode</span>
+        <input id="perfMode" type="checkbox" />
+        <span></span>
+      </label>
+
+      <label class="diag-row">
+        <span>DPR Limit</span>
+        <input id="dprSlider" type="range" min="0.75" max="2" step="0.25" value="2" />
+        <span class="diag-mini" id="dprSliderVal">2.00</span>
+      </label>
+
+      <label class="diag-row">
+        <span>Ambient Loop</span>
+        <input id="ambientToggle" type="checkbox" />
+        <span></span>
+      </label>
+
+      <label class="diag-row">
+        <span>Glitch Override</span>
         <input id="glitchToggle" type="checkbox" />
-        <span class="t-ui"></span>
-        <span class="t-label">Glitch Override</span>
+        <span></span>
       </label>
 
-      <label class="toggle">
-        <input id="soundToggle" type="checkbox" />
-        <span class="t-ui"></span>
-        <span class="t-label">Ambient Loop</span>
-      </label>
+      <div class="diag-foot">Hidden console: type <b>LKNZMZD</b></div>
     </div>
-
-    <div class="diag-note">
-      Hidden console: type <b>LKNZMZD</b>
-    </div>
-  </aside>
+  </div>
 
   <!-- HIDDEN COMMAND CONSOLE -->
   <div id="console" class="cmd-console" aria-hidden="true">
@@ -157,7 +189,7 @@
       <circle cx="72" cy="42" r="5" class="eye" />
       <line x1="45" y1="54" x2="75" y2="54" />
       <rect x="26" y="66" width="68" height="52" rx="14" />
-      <rect x="52" y="84" width="16" height="16" rx="4" class="chest" />
+      <rect x="52" y1="84" width="16" height="16" rx="4" class="chest" />
       <line x1="26" y1="80" x2="10" y2="92" />
       <line x1="94" y1="80" x2="110" y2="92" />
       <line x1="45" y1="118" x2="40" y2="134" />
@@ -165,12 +197,11 @@
     </svg>
   </div>
 
-  <!-- INTRO (SINGLE ONLY) -->
+  <!-- INTRO -->
   <div id="intro" class="intro" aria-label="Intro loader">
     <div class="intro-inner">
       <div class="intro-mark" aria-hidden="true"></div>
 
-      <!-- morph text -->
       <div id="morphText" class="morph-text" aria-label="Identity formation text"></div>
 
       <div class="intro-sub">SYSTEM BOOT • MECHANICAL DIVISION</div>
@@ -229,10 +260,14 @@
   }
   </script>
 
-  <script>
-    document.getElementById("y").textContent = new Date().getFullYear();
-  </script>
+  <!-- ✅ main.js (module). Prefer cache-busting during dev too -->
+  <script type="module" src="./main.js?v=1.0.2"></script>
 
-  <script type="module" src="./main.js"></script>
+  <!-- ✅ If JS fails to load (blocked/cached), show a hint -->
+  <noscript>
+    <div style="position:fixed;left:18px;bottom:18px;color:#fff;background:#000;padding:10px;border:1px solid #555;border-radius:10px;z-index:99999;">
+      JavaScript is disabled. LKNZMZD requires JS for animations and diagnostics.
+    </div>
+  </noscript>
 </body>
 </html>

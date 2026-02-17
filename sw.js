@@ -1,20 +1,26 @@
-// sw.js — LKNZMZD PWA cache (safe + minimal)
-const CACHE_NAME = "lknzmzd-v1";
+// sw.js — LKNZMZD PWA cache (Safari-safe, no redirect responses)
+const CACHE_NAME = "lknzmzd-v2";
+
 const ASSETS = [
-  "/",
   "/index.html",
+  "/division.html",
   "/style.css",
   "/main.js",
-  "/manifest.webmanifest"
+  "/manifest.webmanifest",
+
+  // icons (adjust if your paths differ)
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/maskable-512.png"
 ];
 
-// Install: pre-cache shell
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+  );
   self.skipWaiting();
 });
 
-// Activate: cleanup old caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -24,15 +30,54 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: cache-first for same-origin, network fallback
+// Network-first for HTML navigations (fixes Safari back/forward + redirects)
+// Cache-first for static assets
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // only same-origin
-  if (url.origin !== location.origin) return;
+  // same-origin only
+  if (url.origin !== self.location.origin) return;
 
-  event.respondWith(
-    caches.match(req).then((cached) => cached || fetch(req))
-  );
+  const isNav =
+    req.mode === "navigate" ||
+    (req.headers.get("accept") || "").includes("text/html");
+
+  if (isNav) {
+    event.respondWith(networkFirst(req));
+    return;
+  }
+
+  event.respondWith(cacheFirst(req));
 });
+
+async function networkFirst(req) {
+  try {
+    const fresh = await fetch(req, { redirect: "follow" });
+
+    // Safari hates SW-served redirect responses
+    if (fresh.redirected) return fresh;
+
+    const cache = await caches.open(CACHE_NAME);
+    cache.put(req, fresh.clone());
+    return fresh;
+  } catch {
+    const cached = await caches.match(req);
+    // fallback to homepage if offline and page missing
+    return cached || caches.match("/index.html");
+  }
+}
+
+async function cacheFirst(req) {
+  const cached = await caches.match(req);
+  if (cached) return cached;
+
+  const fresh = await fetch(req, { redirect: "follow" });
+
+  // Don't cache redirected responses
+  if (!fresh.redirected) {
+    const cache = await caches.open(CACHE_NAME);
+    cache.put(req, fresh.clone());
+  }
+  return fresh;
+}

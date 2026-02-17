@@ -1,32 +1,36 @@
-// main.js — LKNZMZD Elite Mechanical Systems Division
+// main.js — LKNZMZD Elite Mechanical Systems Division (UPDATED, STABLE)
+// Fixes:
+// - Removes the broken/duplicate diagnostics block from your earlier file
+// - Keeps Three.js tick loop clean and perf-mode aware
+// - Diagnostics: real-ish GPU (WEBGL_debug_renderer_info), WebGL version, memory usage,
+//   Performance Mode toggle, DPR slider (dynamic), Low Power detection
+// - Intro timing knobs at top (so you can slow/fast the Ilkin→LKNZMZD morph)
+
 import * as THREE from "three";
 
 console.log("LKNZMZD main.js running ✅");
-// PWA: Service Worker registration
+
+// =========================================================
+// PWA: Service Worker registration (single, safe)
+// =========================================================
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  window.addEventListener("load", async () => {
+    try {
+      const swUrl = new URL("./sw.js", location.href);
+      const reg = await navigator.serviceWorker.register(swUrl, { scope: "/" });
+      reg.update?.();
+    } catch (e) {
+      console.warn("SW registration failed:", e);
+    }
   });
 }
 
 // =========================================================
-// GLOBALS
+// HELPERS / GLOBAL STATE
 // =========================================================
 const $ = (q) => document.querySelector(q);
-
-const introEl = $("#intro");
-const morphEl = $("#morphText");
-const enableSoundBtn = $("#enableSound");
-const skipIntroBtn = $("#skipIntro");
-
-const diagToggle = $("#diagToggle");
-const diagPanel = $("#diagPanel");
-const diagClose = $("#diagClose");
-const glitchToggle = $("#glitchToggle");
-const soundToggle = $("#soundToggle");
-
-const consoleEl = $("#console");
-const cmdLog = $("#cmdLog");
+const byId = (id) => document.getElementById(id);
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const prefersReducedMotion =
   window.matchMedia &&
@@ -35,23 +39,60 @@ const prefersReducedMotion =
 const STORAGE_SKIP = "lknzmzd_skip_intro";
 const STORAGE_AMBIENT = "lknzmzd_ambient_on";
 
-// background breathing pulse
-let breatheT = 0;
+window.__LKNZMZD = window.__LKNZMZD || {};
+const STATE = window.__LKNZMZD;
 
-// three.js energy surge (0..1)
-let energy = 0;
+// defaults (don’t overwrite if already set)
+if (typeof STATE.perfMode !== "boolean") STATE.perfMode = false;
+if (typeof STATE.dprLimit !== "number") STATE.dprLimit = 2.0;
+if (typeof STATE.ambientOn !== "boolean") STATE.ambientOn = false;
 
-// fps diagnostics
-let fps = 0;
-let _fpsFrames = 0;
-let _fpsLast = performance.now();
+// =========================================================
+// INTRO TIMING KNOBS (ADJUST HERE)
+// =========================================================
+const INTRO_TIMING = {
+  showFullNameMs: 1500,   // how long "ILKIN AZIMZADE" stays
+  vowelStaggerMs: 140,    // delay between each vowel ejection
+  afterEjectHoldMs: 900,  // pause after vowels fly out
+  slideMs: 900,           // slide into final brand name
+  lockHoldMs: 1100,       // hold after clamp lock before hiding
+};
+
+// =========================================================
+// DOM REFS
+// =========================================================
+const introEl = $("#intro");
+const morphEl = $("#morphText");
+const enableSoundBtn = byId("enableSound");
+const skipIntroBtn = byId("skipIntro");
+
+const diagToggleBtn = byId("diagToggle");
+const diagPanel = byId("diagPanel");
+const diagClose = byId("diagClose");
+
+const ambientToggle = byId("ambientToggle");
+const glitchToggle = byId("glitchToggle");
+const perfModeToggle = byId("perfMode");
+const dprSlider = byId("dprSlider");
+const dprSliderVal = byId("dprSliderVal");
+
+const consoleEl = byId("console");
+const cmdLog = byId("cmdLog");
+
+const dRenderer = byId("dRenderer");
+const dGPU = byId("dGPU");
+const dWebGL = byId("dWebGL");
+const dDPR = byId("dDPR");
+const dFPS = byId("dFPS");
+const dMem = byId("dMem");
+const dRM = byId("dRM");
+const dLP = byId("dLP");
 
 // =========================================================
 // WEB AUDIO — Servo + clamp + ambient (no external files)
 // =========================================================
 let audioCtx = null;
 let ambientNode = null;
-let ambientOn = false;
 
 function getAudioCtx() {
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -82,7 +123,6 @@ function playServoStart() {
   osc.connect(env);
   env.connect(master);
 
-  // gear engage noise
   const bufferSize = Math.floor(ctx.sampleRate * 0.12);
   const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
   const data = noiseBuffer.getChannelData(0);
@@ -115,12 +155,10 @@ function playClampImpact() {
   const ctx = getAudioCtx();
   if (!ctx) return;
 
-  // master
   const master = ctx.createGain();
   master.gain.value = 0.22;
   master.connect(ctx.destination);
 
-  // sub impact
   const sub = ctx.createOscillator();
   sub.type = "sine";
   sub.frequency.setValueAtTime(62, ctx.currentTime);
@@ -134,7 +172,6 @@ function playClampImpact() {
   sub.connect(subEnv);
   subEnv.connect(master);
 
-  // metallic clamp "tick"
   const tick = ctx.createOscillator();
   tick.type = "square";
   tick.frequency.setValueAtTime(210, ctx.currentTime);
@@ -145,7 +182,6 @@ function playClampImpact() {
   tickEnv.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 0.005);
   tickEnv.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
 
-  // simple echo (delay)
   const delay = ctx.createDelay(0.25);
   delay.delayTime.value = 0.11;
   const fb = ctx.createGain();
@@ -172,7 +208,7 @@ function setAmbient(on) {
   const ctx = getAudioCtx();
   if (!ctx) return;
 
-  ambientOn = on;
+  STATE.ambientOn = !!on;
   localStorage.setItem(STORAGE_AMBIENT, on ? "1" : "0");
 
   if (!on) {
@@ -184,12 +220,10 @@ function setAmbient(on) {
     return;
   }
 
-  // industrial ambient loop: filtered noise + slow LFO
   const master = ctx.createGain();
   master.gain.value = 0.06;
   master.connect(ctx.destination);
 
-  // noise buffer loop
   const dur = 1.0;
   const len = Math.floor(ctx.sampleRate * dur);
   const buf = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -209,13 +243,12 @@ function setAmbient(on) {
   bp.frequency.value = 120;
   bp.Q.value = 1.2;
 
-  // slow LFO to "breathe"
   const lfo = ctx.createOscillator();
   lfo.type = "sine";
   lfo.frequency.value = 0.06;
 
   const lfoGain = ctx.createGain();
-  lfoGain.gain.value = 60; // mod amount
+  lfoGain.gain.value = 60;
   lfo.connect(lfoGain);
   lfoGain.connect(lp.frequency);
 
@@ -228,16 +261,16 @@ function setAmbient(on) {
 
   ambientNode = {
     stop: () => { src.stop(); lfo.stop(); },
-    disconnect: () => { master.disconnect(); }
+    disconnect: () => { master.disconnect(); },
   };
 }
 
 // =========================================================
-// INTRO — Ilkin Azimzade → LKNZMZD (drop vowels)
+// INTRO — Ilkin Azimzade → LKNZMZD
 // =========================================================
 const FULL_NAME = "ILKIN AZIMZADE";
 const TARGET = "LKNZMZD";
-const VOWELS = new Set(["A","E","I","O","U"]);
+const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 
 function clearMorph() {
   if (!morphEl) return;
@@ -245,10 +278,11 @@ function clearMorph() {
 }
 
 function setMorphTextAsSpans(text) {
+  if (!morphEl) return;
   clearMorph();
+
   const frag = document.createDocumentFragment();
 
-  // scanline layer
   const scan = document.createElement("div");
   scan.className = "scanline";
   frag.appendChild(scan);
@@ -260,6 +294,7 @@ function setMorphTextAsSpans(text) {
     if (VOWELS.has(ch)) s.classList.add("vowel");
     frag.appendChild(s);
   }
+
   morphEl.appendChild(frag);
 }
 
@@ -267,8 +302,9 @@ function createSparksAtRect(rect, count = 10) {
   for (let i = 0; i < count; i++) {
     const sp = document.createElement("div");
     sp.className = "spark";
-    const x = rect.left + rect.width/2;
-    const y = rect.top + rect.height/2;
+
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
 
     sp.style.left = x + "px";
     sp.style.top = y + "px";
@@ -276,7 +312,7 @@ function createSparksAtRect(rect, count = 10) {
     const ang = Math.random() * Math.PI * 2;
     const dist = 24 + Math.random() * 46;
     const sx = Math.cos(ang) * dist;
-    const sy = Math.sin(ang) * dist - 18; // upward bias
+    const sy = Math.sin(ang) * dist - 18;
 
     sp.style.setProperty("--sx", sx.toFixed(1) + "px");
     sp.style.setProperty("--sy", sy.toFixed(1) + "px");
@@ -286,164 +322,140 @@ function createSparksAtRect(rect, count = 10) {
   }
 }
 
-function computeDropVowels(text) {
-  return text.replace(/[AEIOU]/g, "").replace(/\s+/g, " ").trim();
-}
-
 async function runIdentityFormation() {
   if (!introEl || !morphEl) return;
 
-  // build initial
+  // 1) show full name
   setMorphTextAsSpans(FULL_NAME);
+  await wait(INTRO_TIMING.showFullNameMs);
 
-  // small delay (boot feel)
-  await wait(520);
-
+  // 2) eject vowels
   const letters = Array.from(morphEl.querySelectorAll(".ch"));
-  // eject vowels only (ignore spaces)
   for (const el of letters) {
-    const t = el.textContent.replace("\u00A0"," ");
+    const t = el.textContent.replace("\u00A0", " ");
     if (t !== " " && VOWELS.has(t)) {
       const rect = el.getBoundingClientRect();
       createSparksAtRect(rect, 12);
       el.classList.add("eject");
-      await wait(45); // stagger
+      await wait(INTRO_TIMING.vowelStaggerMs);
     }
   }
+  await wait(INTRO_TIMING.afterEjectHoldMs);
 
-  // allow ejections to finish
-  await wait(520);
-
-  // rebuild into consonant-only, then slide into TARGET alignment
-  const consonants = computeDropVowels(FULL_NAME).replaceAll(" ", "");
-  // expectation: "LKNMZDZD" vs desired "LKNZMZD" — your brand is LKNZMZD
-  // we force final lock to TARGET (doctrine)
-  setMorphTextAsSpans(consonants);
-  await wait(80);
-
-  // slide/lock into TARGET
-  // We do it by replacing content but animating each char in from its old position
+  // 3) lock to brand name with slide mapping
   const beforeChars = Array.from(morphEl.querySelectorAll(".ch"));
   const beforeRects = beforeChars.map((c) => c.getBoundingClientRect());
-  const containerRect = morphEl.getBoundingClientRect();
 
-  // set final target
   setMorphTextAsSpans(TARGET);
-  const afterChars = Array.from(morphEl.querySelectorAll(".ch")).filter(ch => ch.textContent !== "\u00A0");
+
+  const afterChars = Array.from(morphEl.querySelectorAll(".ch")).filter(
+    (ch) => ch.textContent !== "\u00A0"
+  );
   const afterRects = afterChars.map((c) => c.getBoundingClientRect());
 
-  // animate from old → new (best-effort mapping by index)
-  const n = Math.min(beforeChars.length, afterChars.length);
+  const n = Math.min(beforeRects.length, afterRects.length);
   for (let i = 0; i < n; i++) {
     const from = beforeRects[i];
     const to = afterRects[i];
-    const dx = (from.left + from.width/2) - (to.left + to.width/2);
-    const dy = (from.top + from.height/2) - (to.top + to.height/2);
+
+    const dx = (from.left + from.width / 2) - (to.left + to.width / 2);
+    const dy = (from.top + from.height / 2) - (to.top + to.height / 2);
 
     const ch = afterChars[i];
     ch.style.transform = `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0)`;
     ch.style.opacity = "0.85";
   }
 
-  // trigger reflow then animate to zero transform
   void morphEl.offsetWidth;
+
   afterChars.forEach((ch) => {
-    ch.style.transition = prefersReducedMotion ? "none" : "transform 520ms cubic-bezier(.12,.92,.18,1), opacity 320ms ease";
+    ch.style.transition = prefersReducedMotion
+      ? "none"
+      : `transform ${INTRO_TIMING.slideMs}ms cubic-bezier(.12,.92,.18,1), opacity 520ms ease`;
     ch.style.transform = "translate3d(0,0,0)";
     ch.style.opacity = "1";
   });
 
-  await wait(prefersReducedMotion ? 0 : 520);
+  await wait(prefersReducedMotion ? 0 : INTRO_TIMING.slideMs + 250);
 
-  // scanline + clamp + shake + energy surge
+  // 4) scan + clamp
   morphEl.classList.add("scan");
   document.body.classList.add("shake");
   setTimeout(() => document.body.classList.remove("shake"), 300);
 
-  // energy surge for three.js
   energy = 1;
-
-  // clamp sound
   playClampImpact();
-
-  // micro vibration final letters
   morphEl.classList.add("locked");
 
-  await wait(520);
+  await wait(INTRO_TIMING.lockHoldMs);
 
-  // hide intro & mark returning user
   localStorage.setItem(STORAGE_SKIP, "1");
   introEl.classList.add("hidden");
 }
 
-// helper
-function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-// =========================================================
-// INTRO CONTROL: skip mode / returning users
-// =========================================================
+// Intro control
 function shouldSkipIntro() {
   const url = new URL(location.href);
-  if (url.searchParams.get("intro") === "1") return false; // force intro
+  if (url.searchParams.get("intro") === "1") return false;
   return localStorage.getItem(STORAGE_SKIP) === "1";
 }
-
 function hideIntroInstant() {
   if (!introEl) return;
   introEl.classList.add("hidden");
 }
 
-if (skipIntroBtn) {
-  skipIntroBtn.addEventListener("click", () => {
-    localStorage.setItem(STORAGE_SKIP, "1");
-    hideIntroInstant();
-  });
-}
+skipIntroBtn?.addEventListener("click", () => {
+  localStorage.setItem(STORAGE_SKIP, "1");
+  hideIntroInstant();
+});
 
-if (enableSoundBtn) {
-  enableSoundBtn.addEventListener("click", async () => {
-    const ctx = getAudioCtx();
-    if (ctx && ctx.state === "suspended") {
-      try { await ctx.resume(); } catch {}
-    }
-    playServoStart();
+enableSoundBtn?.addEventListener("click", async () => {
+  const ctx = getAudioCtx();
+  if (ctx && ctx.state === "suspended") {
+    try { await ctx.resume(); } catch {}
+  }
+
+  playServoStart();
+
+  if (enableSoundBtn) {
     enableSoundBtn.textContent = "Sound enabled ✓";
     enableSoundBtn.disabled = true;
     enableSoundBtn.style.opacity = "0.65";
     enableSoundBtn.style.cursor = "default";
-
-    // respect stored ambient preference
-    const wantAmbient = localStorage.getItem(STORAGE_AMBIENT) === "1";
-    if (wantAmbient) setAmbient(true);
-    if (soundToggle) soundToggle.checked = wantAmbient;
-  });
-}
-
-// boot
-window.addEventListener("load", async () => {
-  // breathing pulse loop
-  requestAnimationFrame(breatheLoop);
-
-  if (shouldSkipIntro()) {
-    hideIntroInstant();
-  } else {
-    await runIdentityFormation();
   }
 
-  // idle servo twitch every ~40s (micro)
-  setInterval(() => {
-    if (prefersReducedMotion) return;
-    document.body.classList.add("shake");
-    setTimeout(() => document.body.classList.remove("shake"), 120);
-  }, 40000);
+  const wantAmbient = localStorage.getItem(STORAGE_AMBIENT) === "1";
+  if (ambientToggle) ambientToggle.checked = wantAmbient;
+  if (wantAmbient) setAmbient(true);
 });
 
 // =========================================================
-// THREE.JS BACKGROUND
+// THREE.JS BACKGROUND (perf-mode + DPR aware)
 // =========================================================
 let renderer, scene, camera, core, ring, stars, pMat, coreMat, ringMat;
 
-const canvas = document.getElementById("c");
+// energy surge (0..1)
+let energy = 0;
+
+// fps diagnostics
+let fps = 0;
+let _fpsFrames = 0;
+let _fpsLast = performance.now();
+
+const canvas = byId("c");
+
+function effectiveDpr() {
+  const base = window.devicePixelRatio || 1;
+  const limit = Number(STATE.dprLimit || 2);
+  return Math.min(base, limit);
+}
+
+function applyRendererDpr() {
+  if (!renderer) return;
+  renderer.setPixelRatio(effectiveDpr());
+  renderer.setSize(window.innerWidth, window.innerHeight, false);
+}
+
 if (!canvas) {
   console.warn("Canvas #c not found. Three.js background skipped.");
 } else {
@@ -451,16 +463,10 @@ if (!canvas) {
     canvas,
     antialias: true,
     alpha: true,
-    powerPreference: "high-performance",
+    powerPreference: STATE.perfMode ? "low-power" : "high-performance",
   });
 
-  function getDpr() {
-    const dpr = window.devicePixelRatio || 1;
-    return Math.min(dpr, 2);
-  }
-
-  renderer.setPixelRatio(getDpr());
-  renderer.setSize(window.innerWidth, window.innerHeight, false);
+  applyRendererDpr();
 
   scene = new THREE.Scene();
 
@@ -514,13 +520,8 @@ if (!canvas) {
   scene.add(stars);
 
   function onResize() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-
-    renderer.setPixelRatio(getDpr());
-    renderer.setSize(w, h, false);
-
-    camera.aspect = w / h;
+    applyRendererDpr();
+    camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
   }
   window.addEventListener("resize", onResize);
@@ -530,7 +531,7 @@ if (!canvas) {
   function tick() {
     const t = clock.getElapsedTime();
 
-    // fps sampling for diagnostics
+    // FPS sampling
     _fpsFrames++;
     const now = performance.now();
     if (now - _fpsLast >= 500) {
@@ -539,20 +540,27 @@ if (!canvas) {
       _fpsLast = now;
     }
 
-    // energy surge decay
-    energy = Math.max(0, energy - 0.03);
+    // energy decay
+    energy = Math.max(0, energy - 0.02);
 
-    // apply energy to visuals (subtle)
+    // perf-mode affects rotation speed + particle opacity
+    const perf = !!STATE.perfMode;
     const e = energy;
+
+    const coreY = perf ? 0.10 : 0.20;
+    const coreX = perf ? 0.06 : 0.11;
+    const ringZ = perf ? 0.08 : 0.14;
+    const starsY = perf ? 0.01 : 0.02;
+
     if (coreMat) coreMat.opacity = 0.24 + e * 0.18;
     if (ringMat) ringMat.opacity = 0.18 + e * 0.12;
-    if (pMat) pMat.opacity = 0.55 + e * 0.22;
+    if (pMat) pMat.opacity = (perf ? 0.35 : 0.55) + e * 0.18;
 
     if (!prefersReducedMotion) {
-      core.rotation.y = t * (0.20 + e * 0.06);
-      core.rotation.x = t * (0.11 + e * 0.04);
-      ring.rotation.z = t * (0.14 + e * 0.05);
-      stars.rotation.y = t * (0.02 + e * 0.01);
+      core.rotation.y = t * (coreY + e * 0.05);
+      core.rotation.x = t * (coreX + e * 0.03);
+      ring.rotation.z = t * (ringZ + e * 0.04);
+      stars.rotation.y = t * (starsY + e * 0.01);
     }
 
     renderer.render(scene, camera);
@@ -562,8 +570,11 @@ if (!canvas) {
   tick();
 }
 
+// expose renderer for diagnostics
+STATE.renderer = renderer;
+
 // =========================================================
-// ELITE MECHANICAL BUTTON INTERACTIONS (glow inertia + magnet)
+// BUTTON INTERACTIONS (glow inertia + magnet)
 // =========================================================
 (() => {
   const buttons = document.querySelectorAll(".links a");
@@ -587,9 +598,9 @@ if (!canvas) {
     let mvx = 0, mvy = 0;
 
     const glowStiff = 0.12;
-    const glowDamp  = 0.85;
-    const magStiff  = 0.10;
-    const magDamp   = 0.82;
+    const glowDamp = 0.85;
+    const magStiff = 0.10;
+    const magDamp = 0.82;
 
     const magnetStrength = 10;
     const magnetClamp = 10;
@@ -639,7 +650,6 @@ if (!canvas) {
 
     btn.addEventListener("pointermove", (e) => {
       const r = btn.getBoundingClientRect();
-
       tgx = ((e.clientX - r.left) / r.width) * 100;
       tgy = ((e.clientY - r.top) / r.height) * 100;
 
@@ -697,47 +707,155 @@ if (!canvas) {
 })();
 
 // =========================================================
-// DIAGNOSTICS TOGGLE (fixes your "does nothing" issue)
+// DIAGNOSTICS — GPU/WebGL/Memory/PerfMode/DPR/LowPower
 // =========================================================
-function openDiagnostics(open) {
+async function detectLowPower() {
+  const saveData = !!(navigator.connection && navigator.connection.saveData);
+  const mem = navigator.deviceMemory || null;
+  const cores = navigator.hardwareConcurrency || null;
+
+  let batteryHint = false;
+  try {
+    if (navigator.getBattery) {
+      const bat = await navigator.getBattery();
+      batteryHint = (!bat.charging && bat.level <= 0.20);
+    }
+  } catch {}
+
+  if (saveData) return true;
+  if (mem && mem <= 4) return true;
+  if (cores && cores <= 4) return true;
+  if (prefersReducedMotion) return true;
+  if (batteryHint) return true;
+
+  return false;
+}
+
+let lowPowerCached = null;
+detectLowPower().then((v) => (lowPowerCached = v));
+
+function getGLFromRenderer() {
+  if (renderer && renderer.getContext) return renderer.getContext();
+  return null;
+}
+
+function getGPUString(gl) {
+  if (!gl) return "Unknown";
+  const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+  if (!dbg) return "Blocked / Private";
+  const vendor = gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL);
+  const ren = gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL);
+  return `${ren || "Unknown"} (${vendor || "Unknown"})`;
+}
+
+function getWebGLString(gl) {
+  if (!gl) return "Unknown";
+  const is2 =
+    typeof WebGL2RenderingContext !== "undefined" &&
+    gl instanceof WebGL2RenderingContext;
+
+  const ver = gl.getParameter(gl.VERSION) || "";
+  const sl = gl.getParameter(gl.SHADING_LANGUAGE_VERSION) || "";
+  return (is2 ? "WebGL2" : "WebGL1") + ` • ${ver} • GLSL ${sl}`;
+}
+
+function getMemoryString() {
+  const pm = performance && performance.memory;
+  if (!pm) return "n/a (browser)";
+  const used = pm.usedJSHeapSize / (1024 * 1024);
+  const total = pm.totalJSHeapSize / (1024 * 1024);
+  const limit = pm.jsHeapSizeLimit / (1024 * 1024);
+  return `${used.toFixed(0)}MB / ${total.toFixed(0)}MB (limit ${limit.toFixed(0)}MB)`;
+}
+
+function syncDiagnostics(force = false) {
   if (!diagPanel) return;
-  diagPanel.classList.toggle("open", open);
-  diagPanel.setAttribute("aria-hidden", open ? "false" : "true");
+  if (!force && !diagPanel.classList.contains("open")) return;
+
+  const gl = getGLFromRenderer();
+
+  if (dRenderer) dRenderer.textContent = renderer ? "Three.js" : "—";
+  if (dGPU) dGPU.textContent = getGPUString(gl);
+  if (dWebGL) dWebGL.textContent = getWebGLString(gl);
+
+  const currentDpr = renderer ? renderer.getPixelRatio() : (window.devicePixelRatio || 1);
+  if (dDPR) dDPR.textContent = Number(currentDpr).toFixed(2);
+
+  if (dFPS) dFPS.textContent = fps ? String(fps) : "—";
+  if (dMem) dMem.textContent = getMemoryString();
+
+  if (dRM) dRM.textContent = prefersReducedMotion ? "ON" : "OFF";
+  if (dLP) dLP.textContent = (lowPowerCached == null) ? "—" : (lowPowerCached ? "ON" : "OFF");
 }
 
-if (diagToggle) diagToggle.addEventListener("click", () => openDiagnostics(true));
-if (diagClose) diagClose.addEventListener("click", () => openDiagnostics(false));
-
-// fill values
-function diagUpdateLoop() {
-  const dDpr = $("#dDpr");
-  const dFps = $("#dFps");
-  const dPrm = $("#dPrm");
-
-  if (dDpr) dDpr.textContent = String(Math.min(window.devicePixelRatio || 1, 2));
-  if (dFps) dFps.textContent = fps ? String(fps) : "—";
-  if (dPrm) dPrm.textContent = prefersReducedMotion ? "ON" : "OFF";
-
-  requestAnimationFrame(diagUpdateLoop);
-}
-diagUpdateLoop();
-
-// glitch toggle
-if (glitchToggle) {
-  glitchToggle.addEventListener("change", () => {
-    document.body.classList.toggle("glitch", glitchToggle.checked);
+// UI wiring
+if (diagToggleBtn && diagPanel) {
+  diagToggleBtn.addEventListener("click", () => {
+    diagPanel.classList.toggle("open");
+    syncDiagnostics(true);
   });
-}
 
-// ambient toggle (only works after audio enabled)
-if (soundToggle) {
-  soundToggle.checked = localStorage.getItem(STORAGE_AMBIENT) === "1";
-  soundToggle.addEventListener("change", () => {
+  diagClose?.addEventListener("click", () => {
+    diagPanel.classList.remove("open");
+  });
+
+  // initial values
+  if (ambientToggle) {
+    const wantAmbient = localStorage.getItem(STORAGE_AMBIENT) === "1";
+    ambientToggle.checked = wantAmbient;
+    STATE.ambientOn = wantAmbient;
+  }
+  if (perfModeToggle) {
+    perfModeToggle.checked = !!STATE.perfMode;
+    document.documentElement.classList.toggle("perf-mode", !!STATE.perfMode);
+  }
+  if (dprSlider) {
+    dprSlider.value = String(STATE.dprLimit ?? 2);
+    if (dprSliderVal) dprSliderVal.textContent = Number(dprSlider.value).toFixed(2);
+  }
+
+  ambientToggle?.addEventListener("change", (e) => {
+    const on = !!e.target.checked;
     const ctx = getAudioCtx();
-    if (!ctx) return;
-    if (ctx.state === "suspended") ctx.resume().catch(() => {});
-    setAmbient(soundToggle.checked);
+    if (ctx && ctx.state === "suspended") {
+      localStorage.setItem(STORAGE_AMBIENT, on ? "1" : "0");
+      STATE.ambientOn = on;
+      return;
+    }
+    setAmbient(on);
   });
+
+  glitchToggle?.addEventListener("change", (e) => {
+    const on = !!e.target.checked;
+    document.body.classList.toggle("glitch", on);
+  });
+
+  perfModeToggle?.addEventListener("change", (e) => {
+    const on = !!e.target.checked;
+    STATE.perfMode = on;
+    document.documentElement.classList.toggle("perf-mode", on);
+
+    // perf mode sets a sane DPR default
+    const target = on ? 1.0 : 2.0;
+    STATE.dprLimit = target;
+
+    if (dprSlider) dprSlider.value = String(target);
+    if (dprSliderVal) dprSliderVal.textContent = target.toFixed(2);
+
+    applyRendererDpr();
+    syncDiagnostics(true);
+  });
+
+  dprSlider?.addEventListener("input", (e) => {
+    const v = Number(e.target.value);
+    STATE.dprLimit = v;
+    if (dprSliderVal) dprSliderVal.textContent = v.toFixed(2);
+    applyRendererDpr();
+    syncDiagnostics(true);
+  });
+
+  // refresh while open
+  setInterval(() => syncDiagnostics(false), 600);
 }
 
 // =========================================================
@@ -745,7 +863,6 @@ if (soundToggle) {
 // =========================================================
 let keyBuffer = "";
 window.addEventListener("keydown", (e) => {
-  // ignore if typing in an input (not used now, but safe)
   const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
   if (tag === "input" || tag === "textarea") return;
 
@@ -757,15 +874,13 @@ window.addEventListener("keydown", (e) => {
   }
 
   if (keyBuffer.endsWith("LKNZMZD")) {
-    const open = !consoleEl.classList.contains("open");
-    consoleEl.classList.toggle("open", open);
-    consoleEl.setAttribute("aria-hidden", open ? "false" : "true");
+    const open = !consoleEl?.classList.contains("open");
+    consoleEl?.classList.toggle("open", open);
+    consoleEl?.setAttribute("aria-hidden", open ? "false" : "true");
 
-    // glitch follows console state
     document.body.classList.toggle("glitch", open);
     if (glitchToggle) glitchToggle.checked = open;
 
-    // log
     if (cmdLog) {
       const line = document.createElement("div");
       line.textContent = open ? "> CONSOLE OPENED" : "> CONSOLE CLOSED";
@@ -776,13 +891,31 @@ window.addEventListener("keydown", (e) => {
 });
 
 // =========================================================
-// BREATHING PULSE LOOP (updates CSS var)
+// BREATHING PULSE LOOP
 // =========================================================
 function breatheLoop(ts) {
-  // ts is ms
   const t = ts / 1000;
-  // slow pulse
   const p = 0.5 + 0.5 * Math.sin(t * 0.55);
   document.documentElement.style.setProperty("--bgPulse", p.toFixed(3));
   requestAnimationFrame(breatheLoop);
 }
+
+// =========================================================
+// BOOT
+// =========================================================
+window.addEventListener("load", async () => {
+  requestAnimationFrame(breatheLoop);
+
+  if (shouldSkipIntro()) {
+    hideIntroInstant();
+  } else {
+    await runIdentityFormation();
+  }
+
+  // idle micro shake
+  setInterval(() => {
+    if (prefersReducedMotion) return;
+    document.body.classList.add("shake");
+    setTimeout(() => document.body.classList.remove("shake"), 120);
+  }, 40000);
+});
