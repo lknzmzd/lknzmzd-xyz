@@ -13,7 +13,7 @@ console.log("LKNZMZD main.js running ✅");
 // =========================================================
 // PWA: Service Worker registration (single, safe)
 // =========================================================
-if ("serviceWorker" in navigator) {
+if ("serviceWorker" in navigator && false) {
   window.addEventListener("load", async () => {
     try {
       const swUrl = new URL("./sw.js", location.href);
