@@ -25,6 +25,24 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+// Only register Service Worker in production (not localhost)
+const isLocalhost =
+  location.hostname === "localhost" ||
+  location.hostname === "127.0.0.1";
+
+if ("serviceWorker" in navigator && !isLocalhost) {
+  window.addEventListener("load", async () => {
+    try {
+      const swUrl = new URL("./sw.js", location.href);
+      const reg = await navigator.serviceWorker.register(swUrl, { scope: "/" });
+      reg.update?.();
+    } catch (e) {
+      console.warn("SW registration failed:", e);
+    }
+  });
+}
+
+
 // =========================================================
 // HELPERS / GLOBAL STATE
 // =========================================================
