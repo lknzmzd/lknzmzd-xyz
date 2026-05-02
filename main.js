@@ -1,939 +1,527 @@
-// main.js — LKNZMZD Elite Mechanical Systems Division (UPDATED, STABLE)
-// Fixes:
-// - Removes the broken/duplicate diagnostics block from your earlier file
-// - Keeps Three.js tick loop clean and perf-mode aware
-// - Diagnostics: real-ish GPU (WEBGL_debug_renderer_info), WebGL version, memory usage,
-//   Performance Mode toggle, DPR slider (dynamic), Low Power detection
-// - Intro timing knobs at top (so you can slow/fast the Ilkin→LKNZMZD morph)
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 
-import * as THREE from "three";
+const FALLBACK_SYSTEMS = [
+  { id: "PL-01", name: "Engineering Lab", layer: "public", type: "Public Layer", status: "ACTIVE", url: "https://www.lknzmzd.com/", description: "Primary project surface for robotics, embedded systems, experiments, and engineering builds.", input: "robotics concepts, hardware builds, project logs", process: "prototype, document, iterate, publish", output: "public engineering archive" },
+  { id: "TL-01", name: "TK Service Tool", layer: "tooling", type: "Field Operations Tool", status: "LIVE", url: "https://tkservice.lknzmzd.xyz/", description: "Warehouse robot incident parser and reporting interface for operational teams.", input: "raw incidents, robot IDs, shift logs", process: "parse, classify, validate, export", output: "Feishu-ready TSV + analytics" },
+  { id: "AI-01", name: "Instagram AI Manager", layer: "ai", type: "AI Automation Layer", status: "DEV", url: "https://ai.lknzmzd.xyz/", description: "Content generation, image rendering, approval, scheduling, and publishing pipeline.", input: "ideas, prompts, schedules", process: "generate, approve, render, publish", output: "scheduled AI content" },
+  { id: "DOC-01", name: "Division Doctrine", layer: "public", type: "Documentation Layer", status: "ACTIVE", url: "./division.html", description: "Operating philosophy and standards behind the LKNZMZD system identity.", input: "principles, constraints, direction", process: "define, compress, enforce", output: "system doctrine" }
+];
 
-console.log("LKNZMZD main.js running ✅");
-
-// =========================================================
-// PWA: Service Worker registration (single, safe)
-// =========================================================
-if ("serviceWorker" in navigator && false) {
-  window.addEventListener("load", async () => {
-    try {
-      const swUrl = new URL("./sw.js", location.href);
-      const reg = await navigator.serviceWorker.register(swUrl, { scope: "/" });
-      reg.update?.();
-    } catch (e) {
-      console.warn("SW registration failed:", e);
-    }
-  });
-}
-
-// Only register Service Worker in production (not localhost)
-const isLocalhost =
-  location.hostname === "localhost" ||
-  location.hostname === "127.0.0.1";
-
-if ("serviceWorker" in navigator && !isLocalhost) {
-  window.addEventListener("load", async () => {
-    try {
-      const swUrl = new URL("./sw.js", location.href);
-      const reg = await navigator.serviceWorker.register(swUrl, { scope: "/" });
-      reg.update?.();
-    } catch (e) {
-      console.warn("SW registration failed:", e);
-    }
-  });
-}
-
-
-// =========================================================
-// HELPERS / GLOBAL STATE
-// =========================================================
-const $ = (q) => document.querySelector(q);
-const byId = (id) => document.getElementById(id);
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-
-const prefersReducedMotion =
-  window.matchMedia &&
-  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-const STORAGE_SKIP = "lknzmzd_skip_intro";
-const STORAGE_AMBIENT = "lknzmzd_ambient_on";
-
-window.__LKNZMZD = window.__LKNZMZD || {};
-const STATE = window.__LKNZMZD;
-
-// defaults (don’t overwrite if already set)
-if (typeof STATE.perfMode !== "boolean") STATE.perfMode = false;
-if (typeof STATE.dprLimit !== "number") STATE.dprLimit = 2.0;
-if (typeof STATE.ambientOn !== "boolean") STATE.ambientOn = false;
-
-// =========================================================
-// INTRO TIMING KNOBS (ADJUST HERE)
-// =========================================================
-const INTRO_TIMING = {
-  showFullNameMs: 1500,   // how long "ILKIN AZIMZADE" stays
-  vowelStaggerMs: 140,    // delay between each vowel ejection
-  afterEjectHoldMs: 900,  // pause after vowels fly out
-  slideMs: 900,           // slide into final brand name
-  lockHoldMs: 1100,       // hold after clamp lock before hiding
+const ROUTES = {
+  lab: "https://www.lknzmzd.com/",
+  portfolio: "https://www.lknzmzd.net/",
+  tk: "https://tkservice.lknzmzd.xyz/",
+  ai: "https://ai.lknzmzd.xyz/",
+  noctivis: "https://instagram.com/noctivis.lab",
+  doctrine: "./division.html",
+  status: "./status.html",
+  home: "./index.html"
 };
 
-// =========================================================
-// DOM REFS
-// =========================================================
-const introEl = $("#intro");
-const morphEl = $("#morphText");
-const enableSoundBtn = byId("enableSound");
-const skipIntroBtn = byId("skipIntro");
+let systems = FALLBACK_SYSTEMS;
+let activeFilter = "all";
 
-const diagToggleBtn = byId("diagToggle");
-const diagPanel = byId("diagPanel");
-const diagClose = byId("diagClose");
-
-const ambientToggle = byId("ambientToggle");
-const glitchToggle = byId("glitchToggle");
-const perfModeToggle = byId("perfMode");
-const dprSlider = byId("dprSlider");
-const dprSliderVal = byId("dprSliderVal");
-
-const consoleEl = byId("console");
-const cmdLog = byId("cmdLog");
-
-const dRenderer = byId("dRenderer");
-const dGPU = byId("dGPU");
-const dWebGL = byId("dWebGL");
-const dDPR = byId("dDPR");
-const dFPS = byId("dFPS");
-const dMem = byId("dMem");
-const dRM = byId("dRM");
-const dLP = byId("dLP");
-
-// =========================================================
-// WEB AUDIO — Servo + clamp + ambient (no external files)
-// =========================================================
-let audioCtx = null;
-let ambientNode = null;
-
-function getAudioCtx() {
-  const AudioCtx = window.AudioContext || window.webkitAudioContext;
-  if (!AudioCtx) return null;
-  if (!audioCtx) audioCtx = new AudioCtx();
-  return audioCtx;
+function prefersReducedMotion() {
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
 
-function playServoStart() {
-  const ctx = getAudioCtx();
-  if (!ctx) return;
+const IDENTITY_FULL_NAME = "ILKIN AZIMZADE";
+const IDENTITY_TARGET = "LKNZMZD";
+const IDENTITY_VOWELS = new Set(["A", "E", "I", "O", "U"]);
+const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
-  const master = ctx.createGain();
-  master.gain.value = 0.18;
-  master.connect(ctx.destination);
+function setBootLogoText(text) {
+  const logo = $("#bootLogo");
+  if (!logo) return [];
+  logo.innerHTML = "";
 
-  const osc = ctx.createOscillator();
-  osc.type = "triangle";
-  osc.frequency.setValueAtTime(70, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(170, ctx.currentTime + 0.18);
-  osc.frequency.exponentialRampToValueAtTime(95, ctx.currentTime + 0.55);
+  const fragment = document.createDocumentFragment();
+  const scan = document.createElement("span");
+  scan.className = "scan-sweep";
+  fragment.appendChild(scan);
 
-  const env = ctx.createGain();
-  env.gain.setValueAtTime(0.001, ctx.currentTime);
-  env.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.03);
-  env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.75);
+  for (const character of text) {
+    const span = document.createElement("span");
+    span.className = "ch";
+    span.textContent = character === " " ? "\u00A0" : character;
+    if (IDENTITY_VOWELS.has(character)) span.classList.add("vowel");
+    fragment.appendChild(span);
+  }
 
-  osc.connect(env);
-  env.connect(master);
-
-  const bufferSize = Math.floor(ctx.sampleRate * 0.12);
-  const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = noiseBuffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.6;
-
-  const noise = ctx.createBufferSource();
-  noise.buffer = noiseBuffer;
-
-  const noiseFilter = ctx.createBiquadFilter();
-  noiseFilter.type = "bandpass";
-  noiseFilter.frequency.value = 900;
-  noiseFilter.Q.value = 2.2;
-
-  const noiseGain = ctx.createGain();
-  noiseGain.gain.setValueAtTime(0.001, ctx.currentTime);
-  noiseGain.gain.linearRampToValueAtTime(0.30, ctx.currentTime + 0.01);
-  noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-
-  noise.connect(noiseFilter);
-  noiseFilter.connect(noiseGain);
-  noiseGain.connect(master);
-
-  osc.start();
-  noise.start();
-  osc.stop(ctx.currentTime + 0.8);
-  noise.stop(ctx.currentTime + 0.13);
+  logo.appendChild(fragment);
+  return $$(".ch", logo);
 }
 
-function playClampImpact() {
-  const ctx = getAudioCtx();
-  if (!ctx) return;
-
-  const master = ctx.createGain();
-  master.gain.value = 0.22;
-  master.connect(ctx.destination);
-
-  const sub = ctx.createOscillator();
-  sub.type = "sine";
-  sub.frequency.setValueAtTime(62, ctx.currentTime);
-  sub.frequency.exponentialRampToValueAtTime(38, ctx.currentTime + 0.18);
-
-  const subEnv = ctx.createGain();
-  subEnv.gain.setValueAtTime(0.001, ctx.currentTime);
-  subEnv.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.01);
-  subEnv.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
-
-  sub.connect(subEnv);
-  subEnv.connect(master);
-
-  const tick = ctx.createOscillator();
-  tick.type = "square";
-  tick.frequency.setValueAtTime(210, ctx.currentTime);
-  tick.frequency.exponentialRampToValueAtTime(520, ctx.currentTime + 0.03);
-
-  const tickEnv = ctx.createGain();
-  tickEnv.gain.setValueAtTime(0.001, ctx.currentTime);
-  tickEnv.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 0.005);
-  tickEnv.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
-
-  const delay = ctx.createDelay(0.25);
-  delay.delayTime.value = 0.11;
-  const fb = ctx.createGain();
-  fb.gain.value = 0.35;
-  delay.connect(fb);
-  fb.connect(delay);
-
-  const echoGain = ctx.createGain();
-  echoGain.gain.value = 0.22;
-
-  tick.connect(tickEnv);
-  tickEnv.connect(master);
-  tickEnv.connect(delay);
-  delay.connect(echoGain);
-  echoGain.connect(master);
-
-  sub.start();
-  tick.start();
-  sub.stop(ctx.currentTime + 0.25);
-  tick.stop(ctx.currentTime + 0.12);
+function createIdentitySparks(element, count = 9) {
+  const rect = element.getBoundingClientRect();
+  for (let i = 0; i < count; i += 1) {
+    const spark = document.createElement("i");
+    spark.className = "identity-spark";
+    spark.style.left = `${rect.left + rect.width / 2}px`;
+    spark.style.top = `${rect.top + rect.height / 2}px`;
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 18 + Math.random() * 42;
+    spark.style.setProperty("--sx", `${Math.cos(angle) * distance}px`);
+    spark.style.setProperty("--sy", `${Math.sin(angle) * distance - 12}px`);
+    document.body.appendChild(spark);
+    window.setTimeout(() => spark.remove(), 620);
+  }
 }
 
-function setAmbient(on) {
-  const ctx = getAudioCtx();
-  if (!ctx) return;
-
-  STATE.ambientOn = !!on;
-  localStorage.setItem(STORAGE_AMBIENT, on ? "1" : "0");
-
-  if (!on) {
-    if (ambientNode) {
-      try { ambientNode.stop?.(); } catch {}
-      try { ambientNode.disconnect?.(); } catch {}
-      ambientNode = null;
-    }
+async function runIdentityMorph(boot) {
+  const logo = $("#bootLogo");
+  if (!logo) {
+    boot.classList.add("is-hidden");
+    document.body.classList.remove("boot-running");
     return;
   }
 
-  const master = ctx.createGain();
-  master.gain.value = 0.06;
-  master.connect(ctx.destination);
+  document.body.classList.add("boot-running");
+  setBootLogoText(IDENTITY_FULL_NAME);
+  await wait(900);
 
-  const dur = 1.0;
-  const len = Math.floor(ctx.sampleRate * dur);
-  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * 0.25;
-
-  const src = ctx.createBufferSource();
-  src.buffer = buf;
-  src.loop = true;
-
-  const lp = ctx.createBiquadFilter();
-  lp.type = "lowpass";
-  lp.frequency.value = 220;
-
-  const bp = ctx.createBiquadFilter();
-  bp.type = "bandpass";
-  bp.frequency.value = 120;
-  bp.Q.value = 1.2;
-
-  const lfo = ctx.createOscillator();
-  lfo.type = "sine";
-  lfo.frequency.value = 0.06;
-
-  const lfoGain = ctx.createGain();
-  lfoGain.gain.value = 60;
-  lfo.connect(lfoGain);
-  lfoGain.connect(lp.frequency);
-
-  src.connect(bp);
-  bp.connect(lp);
-  lp.connect(master);
-
-  src.start();
-  lfo.start();
-
-  ambientNode = {
-    stop: () => { src.stop(); lfo.stop(); },
-    disconnect: () => { master.disconnect(); },
-  };
-}
-
-// =========================================================
-// INTRO — Ilkin Azimzade → LKNZMZD
-// =========================================================
-const FULL_NAME = "ILKIN AZIMZADE";
-const TARGET = "LKNZMZD";
-const VOWELS = new Set(["A", "E", "I", "O", "U"]);
-
-function clearMorph() {
-  if (!morphEl) return;
-  morphEl.innerHTML = "";
-}
-
-function setMorphTextAsSpans(text) {
-  if (!morphEl) return;
-  clearMorph();
-
-  const frag = document.createDocumentFragment();
-
-  const scan = document.createElement("div");
-  scan.className = "scanline";
-  frag.appendChild(scan);
-
-  for (const ch of text) {
-    const s = document.createElement("span");
-    s.className = "ch";
-    s.textContent = ch === " " ? "\u00A0" : ch;
-    if (VOWELS.has(ch)) s.classList.add("vowel");
-    frag.appendChild(s);
-  }
-
-  morphEl.appendChild(frag);
-}
-
-function createSparksAtRect(rect, count = 10) {
-  for (let i = 0; i < count; i++) {
-    const sp = document.createElement("div");
-    sp.className = "spark";
-
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-
-    sp.style.left = x + "px";
-    sp.style.top = y + "px";
-
-    const ang = Math.random() * Math.PI * 2;
-    const dist = 24 + Math.random() * 46;
-    const sx = Math.cos(ang) * dist;
-    const sy = Math.sin(ang) * dist - 18;
-
-    sp.style.setProperty("--sx", sx.toFixed(1) + "px");
-    sp.style.setProperty("--sy", sy.toFixed(1) + "px");
-
-    document.body.appendChild(sp);
-    setTimeout(() => sp.remove(), 560);
-  }
-}
-
-async function runIdentityFormation() {
-  if (!introEl || !morphEl) return;
-
-  // 1) show full name
-  setMorphTextAsSpans(FULL_NAME);
-  await wait(INTRO_TIMING.showFullNameMs);
-
-  // 2) eject vowels
-  const letters = Array.from(morphEl.querySelectorAll(".ch"));
-  for (const el of letters) {
-    const t = el.textContent.replace("\u00A0", " ");
-    if (t !== " " && VOWELS.has(t)) {
-      const rect = el.getBoundingClientRect();
-      createSparksAtRect(rect, 12);
-      el.classList.add("eject");
-      await wait(INTRO_TIMING.vowelStaggerMs);
+  const firstLetters = $$(".ch", logo);
+  for (const letter of firstLetters) {
+    const text = letter.textContent.replace("\u00A0", " ");
+    if (text !== " " && IDENTITY_VOWELS.has(text)) {
+      createIdentitySparks(letter, 8);
+      letter.classList.add("is-ejected");
+      await wait(70);
     }
   }
-  await wait(INTRO_TIMING.afterEjectHoldMs);
 
-  // 3) lock to brand name with slide mapping
-  const beforeChars = Array.from(morphEl.querySelectorAll(".ch"));
-  const beforeRects = beforeChars.map((c) => c.getBoundingClientRect());
+  await wait(280);
 
-  setMorphTextAsSpans(TARGET);
+  const beforeLetters = $$(".ch", logo).filter((letter) => !letter.classList.contains("is-ejected") && letter.textContent !== "\u00A0");
+  const beforeRects = beforeLetters.map((letter) => letter.getBoundingClientRect());
+  const targetLetters = setBootLogoText(IDENTITY_TARGET).filter((letter) => letter.textContent !== "\u00A0");
+  const targetRects = targetLetters.map((letter) => letter.getBoundingClientRect());
 
-  const afterChars = Array.from(morphEl.querySelectorAll(".ch")).filter(
-    (ch) => ch.textContent !== "\u00A0"
-  );
-  const afterRects = afterChars.map((c) => c.getBoundingClientRect());
-
-  const n = Math.min(beforeRects.length, afterRects.length);
-  for (let i = 0; i < n; i++) {
-    const from = beforeRects[i];
-    const to = afterRects[i];
-
-    const dx = (from.left + from.width / 2) - (to.left + to.width / 2);
-    const dy = (from.top + from.height / 2) - (to.top + to.height / 2);
-
-    const ch = afterChars[i];
-    ch.style.transform = `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0)`;
-    ch.style.opacity = "0.85";
-  }
-
-  void morphEl.offsetWidth;
-
-  afterChars.forEach((ch) => {
-    ch.style.transition = prefersReducedMotion
-      ? "none"
-      : `transform ${INTRO_TIMING.slideMs}ms cubic-bezier(.12,.92,.18,1), opacity 520ms ease`;
-    ch.style.transform = "translate3d(0,0,0)";
-    ch.style.opacity = "1";
+  targetLetters.forEach((letter, index) => {
+    const from = beforeRects[index];
+    const to = targetRects[index];
+    if (!from || !to) return;
+    const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+    const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+    letter.style.transform = `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0)`;
+    letter.style.opacity = "0.78";
   });
 
-  await wait(prefersReducedMotion ? 0 : INTRO_TIMING.slideMs + 250);
+  void logo.offsetWidth;
 
-  // 4) scan + clamp
-  morphEl.classList.add("scan");
-  document.body.classList.add("shake");
-  setTimeout(() => document.body.classList.remove("shake"), 300);
-
-  energy = 1;
-  playClampImpact();
-  morphEl.classList.add("locked");
-
-  await wait(INTRO_TIMING.lockHoldMs);
-
-  localStorage.setItem(STORAGE_SKIP, "1");
-  introEl.classList.add("hidden");
-}
-
-// Intro control
-function shouldSkipIntro() {
-  const url = new URL(location.href);
-  if (url.searchParams.get("intro") === "1") return false;
-  return localStorage.getItem(STORAGE_SKIP) === "1";
-}
-function hideIntroInstant() {
-  if (!introEl) return;
-  introEl.classList.add("hidden");
-}
-
-skipIntroBtn?.addEventListener("click", () => {
-  localStorage.setItem(STORAGE_SKIP, "1");
-  hideIntroInstant();
-});
-
-enableSoundBtn?.addEventListener("click", async () => {
-  const ctx = getAudioCtx();
-  if (ctx && ctx.state === "suspended") {
-    try { await ctx.resume(); } catch {}
-  }
-
-  playServoStart();
-
-  if (enableSoundBtn) {
-    enableSoundBtn.textContent = "Sound enabled ✓";
-    enableSoundBtn.disabled = true;
-    enableSoundBtn.style.opacity = "0.65";
-    enableSoundBtn.style.cursor = "default";
-  }
-
-  const wantAmbient = localStorage.getItem(STORAGE_AMBIENT) === "1";
-  if (ambientToggle) ambientToggle.checked = wantAmbient;
-  if (wantAmbient) setAmbient(true);
-});
-
-// =========================================================
-// THREE.JS BACKGROUND (perf-mode + DPR aware)
-// =========================================================
-let renderer, scene, camera, core, ring, stars, pMat, coreMat, ringMat;
-
-// energy surge (0..1)
-let energy = 0;
-
-// fps diagnostics
-let fps = 0;
-let _fpsFrames = 0;
-let _fpsLast = performance.now();
-
-const canvas = byId("c");
-
-function effectiveDpr() {
-  const base = window.devicePixelRatio || 1;
-  const limit = Number(STATE.dprLimit || 2);
-  return Math.min(base, limit);
-}
-
-function applyRendererDpr() {
-  if (!renderer) return;
-  renderer.setPixelRatio(effectiveDpr());
-  renderer.setSize(window.innerWidth, window.innerHeight, false);
-}
-
-if (!canvas) {
-  console.warn("Canvas #c not found. Three.js background skipped.");
-} else {
-  renderer = new THREE.WebGLRenderer({
-    canvas,
-    antialias: true,
-    alpha: true,
-    powerPreference: STATE.perfMode ? "low-power" : "high-performance",
+  targetLetters.forEach((letter) => {
+    letter.style.transition = "transform 760ms cubic-bezier(.12,.92,.18,1), opacity 520ms ease";
+    letter.style.transform = "translate3d(0,0,0)";
+    letter.style.opacity = "1";
   });
 
-  applyRendererDpr();
+  await wait(840);
+  logo.classList.add("is-scanning", "is-locked");
+  await wait(760);
+  boot.classList.add("is-hidden");
+  window.setTimeout(() => document.body.classList.remove("boot-running"), 720);
+}
 
-  scene = new THREE.Scene();
-
-  camera = new THREE.PerspectiveCamera(
-    55,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    200
-  );
-  camera.position.set(0, 0, 6.2);
-
-  // Core
-  const coreGeo = new THREE.IcosahedronGeometry(2.85, 4);
-  coreMat = new THREE.MeshBasicMaterial({
-    wireframe: true,
-    transparent: true,
-    opacity: 0.24,
-  });
-  core = new THREE.Mesh(coreGeo, coreMat);
-  scene.add(core);
-
-  // Ring
-  const ringGeo = new THREE.TorusGeometry(3.35, 0.03, 12, 260);
-  ringMat = new THREE.MeshBasicMaterial({
-    transparent: true,
-    opacity: 0.18,
-  });
-  ring = new THREE.Mesh(ringGeo, ringMat);
-  ring.rotation.x = Math.PI / 2.2;
-  scene.add(ring);
-
-  // Particles
-  const COUNT = 1800;
-  const positions = new Float32Array(COUNT * 3);
-  for (let i = 0; i < COUNT; i++) {
-    const i3 = i * 3;
-    positions[i3 + 0] = (Math.random() - 0.5) * 24;
-    positions[i3 + 1] = (Math.random() - 0.5) * 16;
-    positions[i3 + 2] = (Math.random() - 0.5) * 24;
+function initBoot() {
+  const boot = $("#boot");
+  if (!boot || prefersReducedMotion()) {
+    boot?.classList.add("is-hidden");
+    document.body.classList.remove("boot-running");
+    return;
   }
-  const pGeo = new THREE.BufferGeometry();
-  pGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
-  pMat = new THREE.PointsMaterial({
-    size: 0.02,
-    transparent: true,
-    opacity: 0.55,
-  });
-
-  stars = new THREE.Points(pGeo, pMat);
-  scene.add(stars);
-
-  function onResize() {
-    applyRendererDpr();
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+  const forceIntro = new URLSearchParams(window.location.search).get("intro") === "1";
+  const seen = sessionStorage.getItem("lknzmzd-v23-identity-seen");
+  if (seen && !forceIntro) {
+    boot.classList.add("is-hidden");
+    document.body.classList.remove("boot-running");
+    return;
   }
-  window.addEventListener("resize", onResize);
 
-  const clock = new THREE.Clock();
+  sessionStorage.setItem("lknzmzd-v23-identity-seen", "1");
+  runIdentityMorph(boot).catch(() => {
+    boot.classList.add("is-hidden");
+    document.body.classList.remove("boot-running");
+  });
+}
+
+function initCanvas() {
+  const canvas = $("#systemCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d", { alpha: true });
+  if (!ctx) return;
+
+  let width = 0;
+  let height = 0;
+  let dpr = 1;
+  let particles = [];
+  let frame = 0;
+  const lowPower = prefersReducedMotion() || window.innerWidth < 620;
+  const count = lowPower ? 42 : 86;
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, lowPower ? 1.25 : 1.8);
+    width = Math.floor(window.innerWidth);
+    height = Math.floor(window.innerHeight);
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    particles = Array.from({ length: count }, (_, i) => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * (lowPower ? 0.12 : 0.24),
+      vy: (Math.random() - 0.5) * (lowPower ? 0.12 : 0.24),
+      r: Math.random() * 1.8 + 0.5,
+      seed: i * 17.17
+    }));
+  }
+
+  function drawGrid() {
+    const grid = 58;
+    ctx.save();
+    ctx.strokeStyle = "rgba(120,234,255,0.045)";
+    ctx.lineWidth = 1;
+    const offset = (frame * 0.08) % grid;
+    for (let x = -grid + offset; x < width + grid; x += grid) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+    for (let y = -grid + offset; y < height + grid; y += grid) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawParticles() {
+    ctx.save();
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < -20) p.x = width + 20;
+      if (p.x > width + 20) p.x = -20;
+      if (p.y < -20) p.y = height + 20;
+      if (p.y > height + 20) p.y = -20;
+      const glow = 0.24 + Math.sin(frame * 0.018 + p.seed) * 0.12;
+      ctx.fillStyle = `rgba(120,234,255,${Math.max(0.08, glow)})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = "rgba(120,234,255,0.08)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const a = particles[i];
+        const b = particles[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 128) {
+          ctx.globalAlpha = (1 - dist / 128) * 0.42;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawCore() {
+    const cx = width * 0.72;
+    const cy = height * 0.45;
+    const pulse = 0.5 + Math.sin(frame * 0.025) * 0.5;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(frame * 0.002);
+    for (let i = 0; i < 4; i++) {
+      const r = 72 + i * 34 + pulse * 10;
+      ctx.strokeStyle = `rgba(120,234,255,${0.16 - i * 0.025})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(0, 0, r, Math.PI * (0.15 + i * 0.06), Math.PI * (1.45 + i * 0.05));
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
 
   function tick() {
-    const t = clock.getElapsedTime();
-
-    // FPS sampling
-    _fpsFrames++;
-    const now = performance.now();
-    if (now - _fpsLast >= 500) {
-      fps = Math.round((_fpsFrames * 1000) / (now - _fpsLast));
-      _fpsFrames = 0;
-      _fpsLast = now;
-    }
-
-    // energy decay
-    energy = Math.max(0, energy - 0.02);
-
-    // perf-mode affects rotation speed + particle opacity
-    const perf = !!STATE.perfMode;
-    const e = energy;
-
-    const coreY = perf ? 0.10 : 0.20;
-    const coreX = perf ? 0.06 : 0.11;
-    const ringZ = perf ? 0.08 : 0.14;
-    const starsY = perf ? 0.01 : 0.02;
-
-    if (coreMat) coreMat.opacity = 0.24 + e * 0.18;
-    if (ringMat) ringMat.opacity = 0.18 + e * 0.12;
-    if (pMat) pMat.opacity = (perf ? 0.35 : 0.55) + e * 0.18;
-
-    if (!prefersReducedMotion) {
-      core.rotation.y = t * (coreY + e * 0.05);
-      core.rotation.x = t * (coreX + e * 0.03);
-      ring.rotation.z = t * (ringZ + e * 0.04);
-      stars.rotation.y = t * (starsY + e * 0.01);
-    }
-
-    renderer.render(scene, camera);
-    requestAnimationFrame(tick);
+    frame += 1;
+    ctx.clearRect(0, 0, width, height);
+    drawGrid();
+    drawParticles();
+    drawCore();
+    if (!prefersReducedMotion()) requestAnimationFrame(tick);
   }
 
-  tick();
+  resize();
+  window.addEventListener("resize", resize, { passive: true });
+  if (!prefersReducedMotion()) requestAnimationFrame(tick);
+  else {
+    drawGrid();
+    drawParticles();
+    drawCore();
+  }
 }
 
-// expose renderer for diagnostics
-STATE.renderer = renderer;
-
-// =========================================================
-// BUTTON INTERACTIONS (glow inertia + magnet)
-// =========================================================
-(() => {
-  const buttons = document.querySelectorAll(".links a");
-  if (!buttons.length) return;
-
-  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-
-  buttons.forEach((btn) => {
-    if (!btn.querySelector(".fx-glow")) {
-      const glow = document.createElement("span");
-      glow.className = "fx-glow";
-      btn.appendChild(glow);
-    }
-
-    let tgx = 50, tgy = 50;
-    let cgx = 50, cgy = 50;
-    let vx = 0, vy = 0;
-
-    let tmx = 0, tmy = 0;
-    let cmx = 0, cmy = 0;
-    let mvx = 0, mvy = 0;
-
-    const glowStiff = 0.12;
-    const glowDamp = 0.85;
-    const magStiff = 0.10;
-    const magDamp = 0.82;
-
-    const magnetStrength = 10;
-    const magnetClamp = 10;
-
-    let hover = false;
-
-    function raf() {
-      const dx = tgx - cgx;
-      const dy = tgy - cgy;
-      vx += dx * glowStiff;
-      vy += dy * glowStiff;
-      vx *= glowDamp;
-      vy *= glowDamp;
-      cgx += vx;
-      cgy += vy;
-
-      btn.style.setProperty("--mx", cgx.toFixed(2) + "%");
-      btn.style.setProperty("--my", cgy.toFixed(2) + "%");
-
-      const mdx = tmx - cmx;
-      const mdy = tmy - cmy;
-      mvx += mdx * magStiff;
-      mvy += mdy * magStiff;
-      mvx *= magDamp;
-      mvy *= magDamp;
-      cmx += mvx;
-      cmy += mvy;
-
-      if (hover) {
-        btn.style.setProperty("--magX", cmx.toFixed(2) + "px");
-        btn.style.setProperty("--magY", cmy.toFixed(2) + "px");
-      } else {
-        btn.style.setProperty("--magX", "0px");
-        btn.style.setProperty("--magY", "0px");
-      }
-
-      requestAnimationFrame(raf);
-    }
-    raf();
-
-    btn.addEventListener("pointerenter", () => { hover = true; });
-    btn.addEventListener("pointerleave", () => {
-      hover = false;
-      tgx = 50; tgy = 50;
-      tmx = 0;  tmy = 0;
-    });
-
-    btn.addEventListener("pointermove", (e) => {
-      const r = btn.getBoundingClientRect();
-      tgx = ((e.clientX - r.left) / r.width) * 100;
-      tgy = ((e.clientY - r.top) / r.height) * 100;
-
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-
-      const ox = (e.clientX - cx) / (r.width / 2);
-      const oy = (e.clientY - cy) / (r.height / 2);
-
-      const px = clamp(ox * magnetStrength, -magnetClamp, magnetClamp);
-      const py = clamp(oy * magnetStrength, -magnetClamp, magnetClamp);
-
-      tmx = px;
-      tmy = py;
-    }, { passive: true });
-
-    btn.addEventListener("pointerdown", () => {
-      btn.classList.remove("is-clicked");
-      void btn.offsetWidth;
-      btn.classList.add("is-clicked");
-      setTimeout(() => btn.classList.remove("is-clicked"), 520);
-    });
-
-    btn.addEventListener("focus", () => {
-      btn.classList.remove("is-focuspulse");
-      void btn.offsetWidth;
-      btn.classList.add("is-focuspulse");
-      setTimeout(() => btn.classList.remove("is-focuspulse"), 700);
-    });
-  });
-})();
-
-// =========================================================
-// CARD LIGHTING (cursor-follow)
-// =========================================================
-(() => {
-  const card = document.querySelector(".card");
-  if (!card) return;
-
-  const set = (x, y) => {
-    card.style.setProperty("--lx", x + "%");
-    card.style.setProperty("--ly", y + "%");
-  };
-
-  const move = (e) => {
-    const r = card.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * 100;
-    const y = ((e.clientY - r.top) / r.height) * 100;
-    set(x.toFixed(2), y.toFixed(2));
-  };
-
-  card.addEventListener("pointerenter", move, { passive: true });
-  card.addEventListener("pointermove", move, { passive: true });
-  card.addEventListener("pointerleave", () => set(50, 35), { passive: true });
-})();
-
-// =========================================================
-// DIAGNOSTICS — GPU/WebGL/Memory/PerfMode/DPR/LowPower
-// =========================================================
-async function detectLowPower() {
-  const saveData = !!(navigator.connection && navigator.connection.saveData);
-  const mem = navigator.deviceMemory || null;
-  const cores = navigator.hardwareConcurrency || null;
-
-  let batteryHint = false;
+async function loadSystems() {
   try {
-    if (navigator.getBattery) {
-      const bat = await navigator.getBattery();
-      batteryHint = (!bat.charging && bat.level <= 0.20);
-    }
-  } catch {}
-
-  if (saveData) return true;
-  if (mem && mem <= 4) return true;
-  if (cores && cores <= 4) return true;
-  if (prefersReducedMotion) return true;
-  if (batteryHint) return true;
-
-  return false;
-}
-
-let lowPowerCached = null;
-detectLowPower().then((v) => (lowPowerCached = v));
-
-function getGLFromRenderer() {
-  if (renderer && renderer.getContext) return renderer.getContext();
-  return null;
-}
-
-function getGPUString(gl) {
-  if (!gl) return "Unknown";
-  const dbg = gl.getExtension("WEBGL_debug_renderer_info");
-  if (!dbg) return "Blocked / Private";
-  const vendor = gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL);
-  const ren = gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL);
-  return `${ren || "Unknown"} (${vendor || "Unknown"})`;
-}
-
-function getWebGLString(gl) {
-  if (!gl) return "Unknown";
-  const is2 =
-    typeof WebGL2RenderingContext !== "undefined" &&
-    gl instanceof WebGL2RenderingContext;
-
-  const ver = gl.getParameter(gl.VERSION) || "";
-  const sl = gl.getParameter(gl.SHADING_LANGUAGE_VERSION) || "";
-  return (is2 ? "WebGL2" : "WebGL1") + ` • ${ver} • GLSL ${sl}`;
-}
-
-function getMemoryString() {
-  const pm = performance && performance.memory;
-  if (!pm) return "n/a (browser)";
-  const used = pm.usedJSHeapSize / (1024 * 1024);
-  const total = pm.totalJSHeapSize / (1024 * 1024);
-  const limit = pm.jsHeapSizeLimit / (1024 * 1024);
-  return `${used.toFixed(0)}MB / ${total.toFixed(0)}MB (limit ${limit.toFixed(0)}MB)`;
-}
-
-function syncDiagnostics(force = false) {
-  if (!diagPanel) return;
-  if (!force && !diagPanel.classList.contains("open")) return;
-
-  const gl = getGLFromRenderer();
-
-  if (dRenderer) dRenderer.textContent = renderer ? "Three.js" : "—";
-  if (dGPU) dGPU.textContent = getGPUString(gl);
-  if (dWebGL) dWebGL.textContent = getWebGLString(gl);
-
-  const currentDpr = renderer ? renderer.getPixelRatio() : (window.devicePixelRatio || 1);
-  if (dDPR) dDPR.textContent = Number(currentDpr).toFixed(2);
-
-  if (dFPS) dFPS.textContent = fps ? String(fps) : "—";
-  if (dMem) dMem.textContent = getMemoryString();
-
-  if (dRM) dRM.textContent = prefersReducedMotion ? "ON" : "OFF";
-  if (dLP) dLP.textContent = (lowPowerCached == null) ? "—" : (lowPowerCached ? "ON" : "OFF");
-}
-
-// UI wiring
-if (diagToggleBtn && diagPanel) {
-  diagToggleBtn.addEventListener("click", () => {
-    diagPanel.classList.toggle("open");
-    syncDiagnostics(true);
-  });
-
-  diagClose?.addEventListener("click", () => {
-    diagPanel.classList.remove("open");
-  });
-
-  // initial values
-  if (ambientToggle) {
-    const wantAmbient = localStorage.getItem(STORAGE_AMBIENT) === "1";
-    ambientToggle.checked = wantAmbient;
-    STATE.ambientOn = wantAmbient;
+    const response = await fetch("./systems.json", { cache: "no-store" });
+    if (!response.ok) throw new Error("systems.json not available");
+    systems = await response.json();
+  } catch (error) {
+    systems = FALLBACK_SYSTEMS;
+    console.warn("Using fallback systems:", error);
   }
-  if (perfModeToggle) {
-    perfModeToggle.checked = !!STATE.perfMode;
-    document.documentElement.classList.toggle("perf-mode", !!STATE.perfMode);
-  }
-  if (dprSlider) {
-    dprSlider.value = String(STATE.dprLimit ?? 2);
-    if (dprSliderVal) dprSliderVal.textContent = Number(dprSlider.value).toFixed(2);
-  }
-
-  ambientToggle?.addEventListener("change", (e) => {
-    const on = !!e.target.checked;
-    const ctx = getAudioCtx();
-    if (ctx && ctx.state === "suspended") {
-      localStorage.setItem(STORAGE_AMBIENT, on ? "1" : "0");
-      STATE.ambientOn = on;
-      return;
-    }
-    setAmbient(on);
-  });
-
-  glitchToggle?.addEventListener("change", (e) => {
-    const on = !!e.target.checked;
-    document.body.classList.toggle("glitch", on);
-  });
-
-  perfModeToggle?.addEventListener("change", (e) => {
-    const on = !!e.target.checked;
-    STATE.perfMode = on;
-    document.documentElement.classList.toggle("perf-mode", on);
-
-    // perf mode sets a sane DPR default
-    const target = on ? 1.0 : 2.0;
-    STATE.dprLimit = target;
-
-    if (dprSlider) dprSlider.value = String(target);
-    if (dprSliderVal) dprSliderVal.textContent = target.toFixed(2);
-
-    applyRendererDpr();
-    syncDiagnostics(true);
-  });
-
-  dprSlider?.addEventListener("input", (e) => {
-    const v = Number(e.target.value);
-    STATE.dprLimit = v;
-    if (dprSliderVal) dprSliderVal.textContent = v.toFixed(2);
-    applyRendererDpr();
-    syncDiagnostics(true);
-  });
-
-  // refresh while open
-  setInterval(() => syncDiagnostics(false), 600);
+  updateModuleMetric();
 }
 
-// =========================================================
-// COMMAND CONSOLE (type LKNZMZD)
-// =========================================================
-let keyBuffer = "";
-window.addEventListener("keydown", (e) => {
-  const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
-  if (tag === "input" || tag === "textarea") return;
+function updateModuleMetric() {
+  const metric = $("#metricModules");
+  if (metric) metric.textContent = String(systems.length).padStart(2, "0");
+}
 
-  const k = e.key.toUpperCase();
-  if (k.length === 1 && /[A-Z0-9]/.test(k)) {
-    keyBuffer = (keyBuffer + k).slice(-24);
-  } else {
+function statusClass(status = "") {
+  return status.toLowerCase().replace(/\s+/g, "-");
+}
+
+function escapeHtml(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function createModuleCard(module) {
+  const linkEnabled = module.url && module.url !== "#";
+  const external = linkEnabled && !module.url.startsWith("./") && !module.url.startsWith("#");
+  return `
+    <article class="module-card reveal" data-layer="${escapeHtml(module.layer)}">
+      <div class="module-meta">
+        <span class="module-id">${escapeHtml(module.id)}</span>
+        <span class="module-status ${statusClass(module.status)}">${escapeHtml(module.status)}</span>
+      </div>
+      <div class="module-type">${escapeHtml(module.type)}</div>
+      <h3>${escapeHtml(module.name)}</h3>
+      <p class="module-desc">${escapeHtml(module.description)}</p>
+      <div class="io-flow" aria-label="Input process output flow">
+        <div><small>INPUT</small><span>${escapeHtml(module.input)}</span></div>
+        <div><small>PROCESS</small><span>${escapeHtml(module.process)}</span></div>
+        <div><small>OUTPUT</small><span>${escapeHtml(module.output)}</span></div>
+      </div>
+      <a class="module-link ${linkEnabled ? "" : "is-disabled"}" href="${escapeHtml(module.url || "#")}" ${external ? 'target="_blank" rel="noreferrer"' : ""}>
+        <span>${linkEnabled ? "ENTER MODULE" : "ROUTE PENDING"}</span><span>→</span>
+      </a>
+    </article>
+  `;
+}
+
+function renderModules() {
+  const grid = $("#moduleGrid");
+  if (!grid) return;
+  const filtered = systems.filter((module) => activeFilter === "all" || module.layer === activeFilter);
+  grid.innerHTML = filtered.map(createModuleCard).join("");
+  initReveal();
+}
+
+function renderStatusPage() {
+  const grid = $("#statusGrid");
+  if (!grid) return;
+  grid.innerHTML = systems.map((module) => `
+    <article class="status-card reveal">
+      <div class="module-meta">
+        <span class="module-id">${escapeHtml(module.id)}</span>
+        <span class="module-status ${statusClass(module.status)}">${escapeHtml(module.status)}</span>
+      </div>
+      <h3>${escapeHtml(module.name)}</h3>
+      <p>${escapeHtml(module.description)}</p>
+      <a class="module-link ${module.url && module.url !== "#" ? "" : "is-disabled"}" href="${escapeHtml(module.url || "#")}"><span>${module.url && module.url !== "#" ? "OPEN ROUTE" : "NO PUBLIC ROUTE"}</span><span>→</span></a>
+    </article>
+  `).join("");
+  initReveal();
+}
+
+function initFilters() {
+  const buttons = $$(".filter-btn");
+  if (!buttons.length) return;
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      activeFilter = button.dataset.filter || "all";
+      buttons.forEach((btn) => btn.classList.toggle("active", btn === button));
+      renderModules();
+    });
+  });
+}
+
+function initReveal() {
+  const items = $$(".reveal:not(.is-visible)");
+  if (!items.length) return;
+  if (!("IntersectionObserver" in window) || prefersReducedMotion()) {
+    items.forEach((item) => item.classList.add("is-visible"));
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.14 });
+  items.forEach((item) => observer.observe(item));
+}
+
+function routeTo(key) {
+  const url = ROUTES[key];
+  if (!url) return false;
+  if (url.startsWith("http")) window.open(url, "_blank", "noopener,noreferrer");
+  else window.location.href = url;
+  return true;
+}
+
+function commandHelp() {
+  return `
+    <div class="command-row"><span><b>open lab</b><br/>Engineering Lab / lknzmzd.com</span><button data-route="lab">RUN</button></div>
+    <div class="command-row"><span><b>open portfolio</b><br/>Professional profile route</span><button data-route="portfolio">RUN</button></div>
+    <div class="command-row"><span><b>open tk</b><br/>TK Service field tool</span><button data-route="tk">RUN</button></div>
+    <div class="command-row"><span><b>open ai</b><br/>Instagram AI Manager</span><button data-route="ai">RUN</button></div>
+    <div class="command-row"><span><b>status</b><br/>Open systems status page</span><button data-route="status">RUN</button></div>
+    <div class="command-row"><span><b>doctrine</b><br/>Open division doctrine</span><button data-route="doctrine">RUN</button></div>
+  `;
+}
+
+function runCommand(raw) {
+  const output = $("#commandOutput");
+  const input = raw.trim().toLowerCase();
+  if (!output) return;
+
+  if (!input || input === "help") {
+    output.innerHTML = commandHelp();
+    wireCommandButtons();
     return;
   }
 
-  if (keyBuffer.endsWith("LKNZMZD")) {
-    const open = !consoleEl?.classList.contains("open");
-    consoleEl?.classList.toggle("open", open);
-    consoleEl?.setAttribute("aria-hidden", open ? "false" : "true");
+  const normalized = input.replace(/^open\s+/, "").replace(/^go\s+/, "");
+  const alias = {
+    lknzmzd: "lab",
+    engineering: "lab",
+    portfolio: "portfolio",
+    cv: "portfolio",
+    tkservice: "tk",
+    tk: "tk",
+    tool: "tk",
+    shiftlog: "status",
+    ai: "ai",
+    instagram: "ai",
+    noctivis: "noctivis",
+    docs: "doctrine",
+    doctrine: "doctrine",
+    status: "status",
+    home: "home"
+  }[normalized];
 
-    document.body.classList.toggle("glitch", open);
-    if (glitchToggle) glitchToggle.checked = open;
-
-    if (cmdLog) {
-      const line = document.createElement("div");
-      line.textContent = open ? "> CONSOLE OPENED" : "> CONSOLE CLOSED";
-      cmdLog.appendChild(line);
-      cmdLog.scrollTop = cmdLog.scrollHeight;
-    }
+  if (alias && routeTo(alias)) {
+    output.innerHTML = `<p><b>routing</b> — opening <code>${escapeHtml(alias)}</code>...</p>`;
+    return;
   }
-});
 
-// =========================================================
-// BREATHING PULSE LOOP
-// =========================================================
-function breatheLoop(ts) {
-  const t = ts / 1000;
-  const p = 0.5 + 0.5 * Math.sin(t * 0.55);
-  document.documentElement.style.setProperty("--bgPulse", p.toFixed(3));
-  requestAnimationFrame(breatheLoop);
+  if (input === "modules") {
+    output.innerHTML = systems.map((m) => `<div class="command-row"><span><b>${escapeHtml(m.id)} / ${escapeHtml(m.name)}</b><br/>${escapeHtml(m.status)} · ${escapeHtml(m.type)}</span><button data-url="${escapeHtml(m.url)}">OPEN</button></div>`).join("");
+    wireCommandButtons();
+    return;
+  }
+
+  output.innerHTML = `<p><b>unknown command</b> — <code>${escapeHtml(input)}</code></p>${commandHelp()}`;
+  wireCommandButtons();
 }
 
-// =========================================================
-// BOOT
-// =========================================================
-window.addEventListener("load", async () => {
-  requestAnimationFrame(breatheLoop);
+function wireCommandButtons() {
+  $$("#commandOutput [data-route]").forEach((button) => {
+    button.addEventListener("click", () => routeTo(button.dataset.route));
+  });
+  $$("#commandOutput [data-url]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const url = button.dataset.url;
+      if (!url || url === "#") return;
+      if (url.startsWith("http")) window.open(url, "_blank", "noopener,noreferrer");
+      else window.location.href = url;
+    });
+  });
+}
 
-  if (shouldSkipIntro()) {
-    hideIntroInstant();
-  } else {
-    await runIdentityFormation();
+function initCommandPalette() {
+  const dialog = $("#commandDialog");
+  const open = $("#openCommand");
+  const close = $("#closeCommand");
+  const input = $("#commandInput");
+  const shortcut = $('[data-command-shortcut="open command"]');
+  if (!dialog || !input) return;
+
+  function openDialog() {
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+    setTimeout(() => input.focus(), 50);
+  }
+  function closeDialog() {
+    if (typeof dialog.close === "function") dialog.close();
+    else dialog.removeAttribute("open");
   }
 
-  // idle micro shake
-  setInterval(() => {
-    if (prefersReducedMotion) return;
-    document.body.classList.add("shake");
-    setTimeout(() => document.body.classList.remove("shake"), 120);
-  }, 40000);
-});
+  open?.addEventListener("click", openDialog);
+  shortcut?.addEventListener("click", openDialog);
+  close?.addEventListener("click", closeDialog);
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) closeDialog();
+  });
+  document.addEventListener("keydown", (event) => {
+    const isMac = navigator.platform.toUpperCase().includes("MAC");
+    if ((isMac ? event.metaKey : event.ctrlKey) && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      openDialog();
+    }
+    if (event.key === "/" && document.activeElement === document.body) {
+      event.preventDefault();
+      openDialog();
+    }
+  });
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") runCommand(input.value);
+  });
+  wireCommandButtons();
+}
+
+function initServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname);
+  if (isLocal) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch((error) => console.warn("SW registration failed", error));
+  });
+}
+
+async function init() {
+  initBoot();
+  initCanvas();
+  await loadSystems();
+  renderModules();
+  renderStatusPage();
+  initFilters();
+  initReveal();
+  initCommandPalette();
+  initServiceWorker();
+}
+
+init();

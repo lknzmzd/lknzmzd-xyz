@@ -1,176 +1,74 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>LKNZMZD — Division Doctrine</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css" />
-  <style>
-    body{ overflow:auto; }
-    .doc-wrap{
-      position: relative;
-      z-index: 2;
-      max-width: 980px;
-      margin: 90px auto;
-      padding: 0 18px 70px;
-    }
-    .doc{
-      background: rgba(10, 15, 25, 0.72);
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 22px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 26px 80px rgba(0,0,0,0.55);
-      padding: 26px 22px;
-    }
-    .doc h1{
-      font-family: 'Orbitron', system-ui, sans-serif;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      margin: 0 0 12px;
-    }
-    .doc h2{
-      font-family: 'Orbitron', system-ui, sans-serif;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      font-size: 14px;
-      opacity: 0.85;
-      margin-top: 22px;
-    }
-    .doc p, .doc li{
-      color: rgba(255,255,255,0.78);
-      line-height: 1.65;
-      font-size: 15px;
-    }
-    .back{
-      display:inline-block;
-      margin-bottom: 14px;
-      text-decoration:none;
-      color: rgba(255,255,255,0.86);
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.05);
-      padding: 10px 14px;
-      border-radius: 14px;
-      font-family: 'Orbitron', system-ui, sans-serif;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      font-size: 12px;
-    }
-    .back:hover{ border-color: rgba(110,231,255,0.30); }
-  </style>
+  <meta name="description" content="The operating doctrine behind LKNZMZD: precision over noise, execution over talk, systems over trends." />
+  <link rel="canonical" href="https://lknzmzd.xyz/division.html" />
+  <meta name="theme-color" content="#02060a" />
+  <link rel="stylesheet" href="./style.css?v=2.3.0" />
+  <link rel="manifest" href="./manifest.webmanifest" />
 </head>
-<body>
-  <div id="bg" aria-hidden="true"><canvas id="c"></canvas></div>
+<body data-page="doctrine">
+  <canvas id="systemCanvas" aria-hidden="true"></canvas>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="scanline" aria-hidden="true"></div>
 
-  <div class="doc-wrap">
-    <a class="back" href="./index.html">← Return</a>
+  <header class="topbar" aria-label="LKNZMZD system header">
+    <a class="brand" href="./index.html" aria-label="LKNZMZD home">
+      <span class="brand-mark">L</span>
+      <span><strong>LKNZMZD.XYZ</strong><small>DOCTRINE / V2.3</small></span>
+    </a>
+    <nav class="topnav" aria-label="Primary navigation">
+      <a href="./index.html#modules">Modules</a>
+      <a href="./status.html">Status</a>
+      <a href="./division.html">Doctrine</a>
+    </nav>
+    <div class="top-actions">
+      <button class="ghost-btn" id="openCommand" type="button"><span>CTRL</span><span>K</span></button>
+      <a class="primary-link" href="./index.html">Return</a>
+    </div>
+  </header>
 
-    <article class="doc">
+  <main class="doc-shell">
+    <article class="doc-card reveal">
+      <div class="eyebrow"><span class="pulse-dot"></span> DOC-01 / SYSTEM STANDARD</div>
       <h1>Division Doctrine</h1>
-      <p><b>LKNZMZD — Elite Mechanical Systems Division</b></p>
+      <p class="lead"><b>LKNZMZD is not a folder of projects. It is a system identity with rules, routes, and output standards.</b></p>
 
       <h2>Origin</h2>
-      <p>
-        LKNZMZD was not created to publish projects. It was built to engineer systems.
-        In a world flooded with simulation and abstraction, LKNZMZD exists at the physical layer —
-        where motion, force, signal, and material converge.
-      </p>
+      <p>LKNZMZD was not created to decorate the internet with screenshots. It exists to convert technical curiosity into operational systems: robotics builds, field tools, AI workflows, and reusable infrastructure.</p>
 
       <h2>Philosophy</h2>
       <ul>
         <li>Precision over noise.</li>
         <li>Execution over talk.</li>
         <li>Systems over trends.</li>
+        <li>Outputs over intentions.</li>
       </ul>
 
-      <h2>Discipline</h2>
-      <p>
-        Embedded architectures • Electro-mechanical integration • Motion control systems • Autonomous robotics • Cyber-physical prototyping.
-      </p>
+      <h2>Operating Rule</h2>
+      <p>Every module must answer four questions: what does it receive, how does it process, what does it output, and how does it improve the next cycle?</p>
 
-      <h2>Standards</h2>
-      <p>
-        Every build must demonstrate mechanical integrity, maintain electrical discipline,
-        respect firmware architecture, optimize motion efficiency, and reduce unnecessary complexity.
-      </p>
+      <h2>Discipline</h2>
+      <p>Robotics systems, embedded architectures, field automation tools, AI-assisted workflows, operational dashboards, and documentation layers belong here only when they produce visible system value.</p>
+
+      <h2>Anti-Pattern</h2>
+      <p>Random animations, vague descriptions, and aesthetic-only pages are rejected. Visual design is allowed to impress, but it must never hide weak architecture.</p>
 
       <h2>Direction</h2>
-      <p>
-        Autonomous humanoid platforms • Intelligent electro-mechanical assemblies • Edge-AI + hardware integration • Precision kinetic mechanisms.
-      </p>
-
-      <h2>Closing</h2>
-      <p>
-        Controlled. Engineered. Operational. This is not content. This is infrastructure.
-      </p>
+      <p>Build a coherent ecosystem: public lab, field tools, AI automation, memory systems, robotic prototypes, status surfaces, and documentation that compound into one stronger operating layer.</p>
     </article>
-  </div>
+  </main>
 
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.161.0/build/three.module.js"
-    }
-  }
-  </script>
-
-  <!-- reuse the same main background without the intro/diagnostics -->
-  <script type="module">
-    import * as THREE from "three";
-    const canvas = document.getElementById("c");
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, powerPreference:"high-performance" });
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    renderer.setPixelRatio(dpr);
-    renderer.setSize(window.innerWidth, window.innerHeight, false);
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 200);
-    camera.position.set(0,0,6.2);
-
-    const coreGeo = new THREE.IcosahedronGeometry(2.85, 4);
-    const coreMat = new THREE.MeshBasicMaterial({ wireframe:true, transparent:true, opacity:0.20 });
-    const core = new THREE.Mesh(coreGeo, coreMat);
-    scene.add(core);
-
-    const ringGeo = new THREE.TorusGeometry(3.35, 0.03, 12, 260);
-    const ringMat = new THREE.MeshBasicMaterial({ transparent:true, opacity:0.14 });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI/2.2;
-    scene.add(ring);
-
-    const COUNT = 1500;
-    const positions = new Float32Array(COUNT*3);
-    for (let i=0;i<COUNT;i++){
-      const i3=i*3;
-      positions[i3]=(Math.random()-0.5)*24;
-      positions[i3+1]=(Math.random()-0.5)*16;
-      positions[i3+2]=(Math.random()-0.5)*24;
-    }
-    const pGeo=new THREE.BufferGeometry();
-    pGeo.setAttribute("position", new THREE.BufferAttribute(positions,3));
-    const pMat=new THREE.PointsMaterial({ size:0.02, transparent:true, opacity:0.45 });
-    const stars=new THREE.Points(pGeo,pMat);
-    scene.add(stars);
-
-    function onResize(){
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-      renderer.setSize(window.innerWidth, window.innerHeight, false);
-      camera.aspect = window.innerWidth/window.innerHeight;
-      camera.updateProjectionMatrix();
-    }
-    window.addEventListener("resize", onResize);
-
-    const clock = new THREE.Clock();
-    function tick(){
-      const t = clock.getElapsedTime();
-      core.rotation.y = t*0.18;
-      core.rotation.x = t*0.10;
-      ring.rotation.z = t*0.12;
-      stars.rotation.y = t*0.02;
-      renderer.render(scene,camera);
-      requestAnimationFrame(tick);
-    }
-    tick();
-  </script>
+  <dialog class="command-dialog" id="commandDialog" aria-label="Command palette">
+    <div class="command-shell">
+      <div class="command-top"><span>COMMAND PALETTE</span><button type="button" id="closeCommand">×</button></div>
+      <input id="commandInput" type="text" autocomplete="off" spellcheck="false" placeholder="Type: open lab, open tk, status, doctrine, help..." />
+      <div class="command-output" id="commandOutput"><p><b>ready</b> — try <code>open lab</code>, <code>status</code>, or <code>help</code>.</p></div>
+    </div>
+  </dialog>
+  <script src="./main.js?v=2.3.0" type="module"></script>
 </body>
 </html>

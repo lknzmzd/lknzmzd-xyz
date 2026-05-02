@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>LKNZMZD — System Status</title>
+  <meta name="description" content="Public system status and route map for LKNZMZD modules." />
+  <link rel="canonical" href="https://lknzmzd.xyz/status.html" />
+  <meta name="theme-color" content="#02060a" />
+  <link rel="stylesheet" href="./style.css?v=2.3.0" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+</head>
+<body data-page="status">
+  <canvas id="systemCanvas" aria-hidden="true"></canvas>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="scanline" aria-hidden="true"></div>
+
+  <header class="topbar" aria-label="LKNZMZD system header">
+    <a class="brand" href="./index.html" aria-label="LKNZMZD home">
+      <span class="brand-mark">L</span>
+      <span><strong>LKNZMZD.XYZ</strong><small>STATUS / V2.3</small></span>
+    </a>
+    <nav class="topnav" aria-label="Primary navigation">
+      <a href="./index.html#modules">Modules</a>
+      <a href="./index.html#feed">Ops Feed</a>
+      <a href="./division.html">Doctrine</a>
+    </nav>
+    <div class="top-actions">
+      <button class="ghost-btn" id="openCommand" type="button"><span>CTRL</span><span>K</span></button>
+      <a class="primary-link" href="./index.html">Return</a>
+    </div>
+  </header>
+
+  <main class="doc-shell">
+    <section class="doc-card reveal">
+      <div class="eyebrow"><span class="pulse-dot"></span> SYS-01 / ROUTE HEALTH</div>
+      <h1>System Status</h1>
+      <p class="lead">This is a public route map. It is not uptime monitoring yet. The next serious upgrade is to connect this page to real health checks.</p>
+
+      <div class="status-strip" style="margin:26px 0 0">
+        <div><span>GATEWAY</span><strong>ONLINE</strong></div>
+        <div><span>ROUTES</span><strong>INDEXED</strong></div>
+        <div><span>MODE</span><strong>PUBLIC</strong></div>
+        <div><span>VERSION</span><strong>2.0.0</strong></div>
+      </div>
+    </section>
+
+    <section class="status-grid" id="statusGrid" aria-live="polite"></section>
+  </main>
+
+  <dialog class="command-dialog" id="commandDialog" aria-label="Command palette">
+    <div class="command-shell">
+      <div class="command-top"><span>COMMAND PALETTE</span><button type="button" id="closeCommand">×</button></div>
+      <input id="commandInput" type="text" autocomplete="off" spellcheck="false" placeholder="Type: open lab, open tk, status, doctrine, help..." />
+      <div class="command-output" id="commandOutput"><p><b>ready</b> — try <code>open lab</code>, <code>open tk</code>, or <code>help</code>.</p></div>
+    </div>
+  </dialog>
+  <script src="./main.js?v=2.3.0" type="module"></script>
+</body>
+</html>

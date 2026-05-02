@@ -1,0 +1,98 @@
+[
+  {
+    "id": "PL-01",
+    "name": "Engineering Lab",
+    "layer": "public",
+    "type": "Public Layer",
+    "status": "ACTIVE",
+    "url": "https://www.lknzmzd.com/",
+    "description": "Primary project surface for robotics, embedded systems, experiments, and engineering builds.",
+    "input": "robotics concepts, hardware builds, project logs",
+    "process": "prototype, document, iterate, publish",
+    "output": "public engineering archive"
+  },
+  {
+    "id": "PL-02",
+    "name": "Portfolio / CV",
+    "layer": "public",
+    "type": "Professional Layer",
+    "status": "ACTIVE",
+    "url": "https://www.lknzmzd.net/",
+    "description": "Professional identity layer for robotics field engineering, automation experience, and career positioning.",
+    "input": "experience, skills, projects",
+    "process": "structure, translate, position",
+    "output": "career-facing profile"
+  },
+  {
+    "id": "TL-01",
+    "name": "TK Service Tool",
+    "layer": "tooling",
+    "type": "Field Operations Tool",
+    "status": "LIVE",
+    "url": "https://tkservice.lknzmzd.xyz/",
+    "description": "Warehouse robot incident parser and reporting interface for operational teams.",
+    "input": "raw incidents, robot IDs, shift logs",
+    "process": "parse, classify, validate, export",
+    "output": "Feishu-ready TSV + analytics"
+  },
+  {
+    "id": "TL-02",
+    "name": "ShiftLog",
+    "layer": "tooling",
+    "type": "Personal Operations Tool",
+    "status": "DEV",
+    "url": "#",
+    "description": "Work-day, salary, report, template, and export system for contractor operations.",
+    "input": "work days, salary profile, expenses",
+    "process": "calculate, summarize, report",
+    "output": "structured work records"
+  },
+  {
+    "id": "AI-01",
+    "name": "Instagram AI Manager",
+    "layer": "ai",
+    "type": "AI Automation Layer",
+    "status": "DEV",
+    "url": "https://ai.lknzmzd.xyz/",
+    "description": "Content generation, image rendering, approval, scheduling, and publishing pipeline.",
+    "input": "ideas, prompts, schedules",
+    "process": "generate, approve, render, publish",
+    "output": "scheduled AI content"
+  },
+  {
+    "id": "AI-02",
+    "name": "Obsidian AI Bridge",
+    "layer": "ai",
+    "type": "Memory Infrastructure",
+    "status": "PROTOTYPE",
+    "url": "#",
+    "description": "Local AI memory ingestion layer for turning project history into searchable Obsidian knowledge.",
+    "input": "conversation summaries, notes, files",
+    "process": "chunk, tag, index, search",
+    "output": "AI-readable personal vault"
+  },
+  {
+    "id": "LAB-01",
+    "name": "Noctivis Lab",
+    "layer": "lab",
+    "type": "Visual Experiment Layer",
+    "status": "ACTIVE",
+    "url": "https://instagram.com/noctivis.lab",
+    "description": "Dark cinematic AI visual experiments, abstract systems aesthetics, and short-form media tests.",
+    "input": "visual prompts, dark concepts, motion loops",
+    "process": "generate, curate, schedule",
+    "output": "experimental visual feed"
+  },
+  {
+    "id": "DOC-01",
+    "name": "Division Doctrine",
+    "layer": "public",
+    "type": "Documentation Layer",
+    "status": "ACTIVE",
+    "url": "./division.html",
+    "description": "Operating philosophy and standards behind the LKNZMZD system identity.",
+    "input": "principles, constraints, direction",
+    "process": "define, compress, enforce",
+    "output": "system doctrine"
+  }
+]
