@@ -1,0 +1,130 @@
+[
+  {
+    "id": "SIGNAL-000",
+    "date": "2026-05-03",
+    "type": "RELEASE",
+    "module": "LKNZMZD Signals",
+    "status": "BACKEND READY",
+    "title": "Signals backend V2.5 prepared",
+    "summary": "Cloudflare Worker subscription endpoint, Supabase subscriber schema, CORS protection, honeypot handling, optional Turnstile support, and frontend endpoint wiring were added.",
+    "tags": [
+      "SYSTEM",
+      "RELEASE",
+      "BACKEND",
+      "SUPABASE",
+      "CLOUDFLARE"
+    ]
+  },
+  {
+    "id": "SIGNAL-001",
+    "date": "2026-05-03",
+    "type": "RELEASE",
+    "module": "LKNZMZD.XYZ",
+    "status": "LIVE",
+    "title": "Systems Gateway V2.5 signals layer prepared",
+    "summary": "The gateway now includes a public signals feed, update archive, subscription intake surface, and backend-ready templates for the next mailing layer.",
+    "tags": [
+      "SYSTEM",
+      "RELEASE",
+      "SIGNALS"
+    ]
+  },
+  {
+    "id": "SIGNAL-002",
+    "date": "2026-05-03",
+    "type": "RELEASE",
+    "module": "LKNZMZD.XYZ",
+    "status": "LIVE",
+    "title": "V2.3 identity intro deployed",
+    "summary": "The opening sequence restores the ILKIN AZIMZADE \u2192 LKNZMZD identity compression without box framing or messy background text.",
+    "tags": [
+      "SYSTEM",
+      "IDENTITY",
+      "FRONTEND"
+    ]
+  },
+  {
+    "id": "SIGNAL-003",
+    "date": "2026-05-02",
+    "type": "TOOLING",
+    "module": "ShiftLog",
+    "status": "DEV",
+    "title": "ShiftLog production hardening branch started",
+    "summary": "The work-log system moved toward stronger API routes, dashboard summaries, reporting, export flow, templates, and work-day reliability.",
+    "tags": [
+      "TOOLING",
+      "OPERATIONS",
+      "SHIFTLOG"
+    ]
+  },
+  {
+    "id": "SIGNAL-004",
+    "date": "2026-05-01",
+    "type": "FIELD OPS",
+    "module": "TK Service Tool",
+    "status": "LIVE",
+    "title": "TK Service reporting layer separated from experiments",
+    "summary": "Production and test surfaces are treated separately so warehouse teams can keep using the stable parser while new reporting features are tested safely.",
+    "tags": [
+      "FIELD OPS",
+      "WAREHOUSE",
+      "ROBOTICS"
+    ]
+  },
+  {
+    "id": "SIGNAL-005",
+    "date": "2026-04-29",
+    "type": "AI",
+    "module": "Instagram AI Manager",
+    "status": "DEV",
+    "title": "Automation worker moved toward scheduled publishing discipline",
+    "summary": "The content pipeline continues toward reliable generation, approval, render, queue, retry, and publish slots instead of one-off assisted chaos.",
+    "tags": [
+      "AI",
+      "AUTOMATION",
+      "CONTENT"
+    ]
+  },
+  {
+    "id": "SIGNAL-006",
+    "date": "2026-04-25",
+    "type": "SYSTEM",
+    "module": "Obsidian AI Bridge",
+    "status": "PROTOTYPE",
+    "title": "Obsidian Brain V16 direction defined",
+    "summary": "The vault architecture shifted toward an auto-processing agent layer that can ingest, classify, route, and retrieve project intelligence.",
+    "tags": [
+      "MEMORY",
+      "OBSIDIAN",
+      "AI"
+    ]
+  },
+  {
+    "id": "SIGNAL-007",
+    "date": "2026-04-18",
+    "type": "ROBOTICS",
+    "module": "Observer / Robotics Layer",
+    "status": "ACTIVE",
+    "title": "Robotics projects promoted into system modules",
+    "summary": "Observer, InMoov, compact robot concepts, and smart chess board direction are positioned as physical execution layers of the LKNZMZD ecosystem.",
+    "tags": [
+      "ROBOTICS",
+      "HARDWARE",
+      "SYSTEMS"
+    ]
+  },
+  {
+    "id": "SIGNAL-008",
+    "date": "2026-04-01",
+    "type": "LAB",
+    "module": "Noctivis Lab",
+    "status": "ACTIVE",
+    "title": "Dark visual experiment stream initialized",
+    "summary": "Noctivis Lab begins operating as an experimental visual layer for cinematic AI loops, abstract identity systems, and short-form media tests.",
+    "tags": [
+      "LAB",
+      "VISUAL",
+      "EXPERIMENT"
+    ]
+  }
+]

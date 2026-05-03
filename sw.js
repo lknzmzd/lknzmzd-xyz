@@ -1,4 +1,4 @@
-const CACHE_VERSION = "lknzmzd-v2.0.0";
+const CACHE_VERSION = "lknzmzd-v2.5.0";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
 self.addEventListener("install", (event) => {

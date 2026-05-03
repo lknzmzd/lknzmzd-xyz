@@ -6,5 +6,10 @@
   "noctivis": "https://instagram.com/noctivis.lab",
   "doctrine": "./division.html",
   "status": "./status.html",
-  "home": "./index.html"
+  "home": "./index.html",
+  "signals": "./updates.html",
+  "updates": "./updates.html",
+  "subscribe": "./subscribe.html",
+  "backend": "./backend/README.md",
+  "health": "https://signals.lknzmzd.xyz/health"
 }

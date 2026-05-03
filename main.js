@@ -5,7 +5,123 @@ const FALLBACK_SYSTEMS = [
   { id: "PL-01", name: "Engineering Lab", layer: "public", type: "Public Layer", status: "ACTIVE", url: "https://www.lknzmzd.com/", description: "Primary project surface for robotics, embedded systems, experiments, and engineering builds.", input: "robotics concepts, hardware builds, project logs", process: "prototype, document, iterate, publish", output: "public engineering archive" },
   { id: "TL-01", name: "TK Service Tool", layer: "tooling", type: "Field Operations Tool", status: "LIVE", url: "https://tkservice.lknzmzd.xyz/", description: "Warehouse robot incident parser and reporting interface for operational teams.", input: "raw incidents, robot IDs, shift logs", process: "parse, classify, validate, export", output: "Feishu-ready TSV + analytics" },
   { id: "AI-01", name: "Instagram AI Manager", layer: "ai", type: "AI Automation Layer", status: "DEV", url: "https://ai.lknzmzd.xyz/", description: "Content generation, image rendering, approval, scheduling, and publishing pipeline.", input: "ideas, prompts, schedules", process: "generate, approve, render, publish", output: "scheduled AI content" },
+  { id: "SIG-01", name: "LKNZMZD Signals", layer: "public", type: "Signals / Update Layer", status: "ACTIVE", url: "./updates.html", description: "Project updates, release notes, build logs, and subscription intake.", input: "project changes, build logs, field notes", process: "classify, compress, publish", output: "signals feed" },
   { id: "DOC-01", name: "Division Doctrine", layer: "public", type: "Documentation Layer", status: "ACTIVE", url: "./division.html", description: "Operating philosophy and standards behind the LKNZMZD system identity.", input: "principles, constraints, direction", process: "define, compress, enforce", output: "system doctrine" }
+];
+
+const FALLBACK_UPDATES = [
+  {
+    "id": "SIGNAL-001",
+    "date": "2026-05-03",
+    "type": "RELEASE",
+    "module": "LKNZMZD.XYZ",
+    "status": "LIVE",
+    "title": "Signals backend V2.5 prepared",
+    "summary": "Cloudflare Worker subscription endpoint, Supabase subscriber schema, CORS protection, honeypot handling, optional Turnstile support, and frontend endpoint wiring were added.",
+    "tags": [
+      "SYSTEM",
+      "RELEASE",
+      "SIGNALS"
+    ]
+  },
+  {
+    "id": "SIGNAL-002",
+    "date": "2026-05-03",
+    "type": "RELEASE",
+    "module": "LKNZMZD.XYZ",
+    "status": "LIVE",
+    "title": "V2.3 identity intro deployed",
+    "summary": "The opening sequence restores the ILKIN AZIMZADE \u2192 LKNZMZD identity compression without box framing or messy background text.",
+    "tags": [
+      "SYSTEM",
+      "IDENTITY",
+      "FRONTEND"
+    ]
+  },
+  {
+    "id": "SIGNAL-003",
+    "date": "2026-05-02",
+    "type": "TOOLING",
+    "module": "ShiftLog",
+    "status": "DEV",
+    "title": "ShiftLog production hardening branch started",
+    "summary": "The work-log system moved toward stronger API routes, dashboard summaries, reporting, export flow, templates, and work-day reliability.",
+    "tags": [
+      "TOOLING",
+      "OPERATIONS",
+      "SHIFTLOG"
+    ]
+  },
+  {
+    "id": "SIGNAL-004",
+    "date": "2026-05-01",
+    "type": "FIELD OPS",
+    "module": "TK Service Tool",
+    "status": "LIVE",
+    "title": "TK Service reporting layer separated from experiments",
+    "summary": "Production and test surfaces are treated separately so warehouse teams can keep using the stable parser while new reporting features are tested safely.",
+    "tags": [
+      "FIELD OPS",
+      "WAREHOUSE",
+      "ROBOTICS"
+    ]
+  },
+  {
+    "id": "SIGNAL-005",
+    "date": "2026-04-29",
+    "type": "AI",
+    "module": "Instagram AI Manager",
+    "status": "DEV",
+    "title": "Automation worker moved toward scheduled publishing discipline",
+    "summary": "The content pipeline continues toward reliable generation, approval, render, queue, retry, and publish slots instead of one-off assisted chaos.",
+    "tags": [
+      "AI",
+      "AUTOMATION",
+      "CONTENT"
+    ]
+  },
+  {
+    "id": "SIGNAL-006",
+    "date": "2026-04-25",
+    "type": "SYSTEM",
+    "module": "Obsidian AI Bridge",
+    "status": "PROTOTYPE",
+    "title": "Obsidian Brain V16 direction defined",
+    "summary": "The vault architecture shifted toward an auto-processing agent layer that can ingest, classify, route, and retrieve project intelligence.",
+    "tags": [
+      "MEMORY",
+      "OBSIDIAN",
+      "AI"
+    ]
+  },
+  {
+    "id": "SIGNAL-007",
+    "date": "2026-04-18",
+    "type": "ROBOTICS",
+    "module": "Observer / Robotics Layer",
+    "status": "ACTIVE",
+    "title": "Robotics projects promoted into system modules",
+    "summary": "Observer, InMoov, compact robot concepts, and smart chess board direction are positioned as physical execution layers of the LKNZMZD ecosystem.",
+    "tags": [
+      "ROBOTICS",
+      "HARDWARE",
+      "SYSTEMS"
+    ]
+  },
+  {
+    "id": "SIGNAL-008",
+    "date": "2026-04-01",
+    "type": "LAB",
+    "module": "Noctivis Lab",
+    "status": "ACTIVE",
+    "title": "Dark visual experiment stream initialized",
+    "summary": "Noctivis Lab begins operating as an experimental visual layer for cinematic AI loops, abstract identity systems, and short-form media tests.",
+    "tags": [
+      "LAB",
+      "VISUAL",
+      "EXPERIMENT"
+    ]
+  }
 ];
 
 const ROUTES = {
@@ -16,11 +132,19 @@ const ROUTES = {
   noctivis: "https://instagram.com/noctivis.lab",
   doctrine: "./division.html",
   status: "./status.html",
+  updates: "./updates.html",
+  signals: "./updates.html",
+  subscribe: "./subscribe.html",
   home: "./index.html"
 };
 
+const SIGNALS_ENDPOINT = document.querySelector('meta[name="signals-endpoint"]')?.getAttribute("content")?.trim() || "https://signals.lknzmzd.xyz/subscribe";
+const SIGNALS_CONTACT_EMAIL = "ilkinazimzade@lknzmzd.com";
+
 let systems = FALLBACK_SYSTEMS;
+let updates = FALLBACK_UPDATES;
 let activeFilter = "all";
+let activeSignalFilter = "all";
 
 function prefersReducedMotion() {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -132,14 +256,14 @@ function initBoot() {
   }
 
   const forceIntro = new URLSearchParams(window.location.search).get("intro") === "1";
-  const seen = sessionStorage.getItem("lknzmzd-v23-identity-seen");
+  const seen = sessionStorage.getItem("lknzmzd-v24-identity-seen");
   if (seen && !forceIntro) {
     boot.classList.add("is-hidden");
     document.body.classList.remove("boot-running");
     return;
   }
 
-  sessionStorage.setItem("lknzmzd-v23-identity-seen", "1");
+  sessionStorage.setItem("lknzmzd-v24-identity-seen", "1");
   runIdentityMorph(boot).catch(() => {
     boot.classList.add("is-hidden");
     document.body.classList.remove("boot-running");
@@ -287,6 +411,17 @@ async function loadSystems() {
   updateModuleMetric();
 }
 
+async function loadUpdates() {
+  try {
+    const response = await fetch("./updates.json", { cache: "no-store" });
+    if (!response.ok) throw new Error("updates.json not available");
+    updates = await response.json();
+  } catch (error) {
+    updates = FALLBACK_UPDATES;
+    console.warn("Using fallback updates:", error);
+  }
+}
+
 function updateModuleMetric() {
   const metric = $("#metricModules");
   if (metric) metric.textContent = String(systems.length).padStart(2, "0");
@@ -294,6 +429,10 @@ function updateModuleMetric() {
 
 function statusClass(status = "") {
   return status.toLowerCase().replace(/\s+/g, "-");
+}
+
+function signalTypeClass(type = "") {
+  return type.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
 function escapeHtml(value = "") {
@@ -340,18 +479,66 @@ function renderModules() {
 function renderStatusPage() {
   const grid = $("#statusGrid");
   if (!grid) return;
-  grid.innerHTML = systems.map((module) => `
-    <article class="status-card reveal">
-      <div class="module-meta">
-        <span class="module-id">${escapeHtml(module.id)}</span>
-        <span class="module-status ${statusClass(module.status)}">${escapeHtml(module.status)}</span>
-      </div>
-      <h3>${escapeHtml(module.name)}</h3>
-      <p>${escapeHtml(module.description)}</p>
-      <a class="module-link ${module.url && module.url !== "#" ? "" : "is-disabled"}" href="${escapeHtml(module.url || "#")}"><span>${module.url && module.url !== "#" ? "OPEN ROUTE" : "NO PUBLIC ROUTE"}</span><span>→</span></a>
-    </article>
-  `).join("");
+  grid.innerHTML = systems.map((module) => {
+    const external = module.url && module.url !== "#" && !module.url.startsWith("./") && !module.url.startsWith("#");
+    return `
+      <article class="status-card reveal">
+        <div class="module-meta">
+          <span class="module-id">${escapeHtml(module.id)}</span>
+          <span class="module-status ${statusClass(module.status)}">${escapeHtml(module.status)}</span>
+        </div>
+        <h3>${escapeHtml(module.name)}</h3>
+        <p>${escapeHtml(module.description)}</p>
+        <a class="module-link ${module.url && module.url !== "#" ? "" : "is-disabled"}" href="${escapeHtml(module.url || "#")}" ${external ? 'target="_blank" rel="noreferrer"' : ""}><span>${module.url && module.url !== "#" ? "OPEN ROUTE" : "NO PUBLIC ROUTE"}</span><span>→</span></a>
+      </article>
+    `;
+  }).join("");
   initReveal();
+}
+
+function createSignalCard(signal, compact = false) {
+  const tags = Array.isArray(signal.tags) ? signal.tags : [];
+  return `
+    <article class="signal-card reveal ${compact ? "compact" : ""}" data-signal-type="${signalTypeClass(signal.type)}">
+      <div class="signal-topline">
+        <span class="signal-id">${escapeHtml(signal.id)}</span>
+        <span class="signal-status ${statusClass(signal.status)}">${escapeHtml(signal.status)}</span>
+      </div>
+      <div class="signal-date"><time datetime="${escapeHtml(signal.date)}">${escapeHtml(signal.date)}</time> · ${escapeHtml(signal.type)} · ${escapeHtml(signal.module)}</div>
+      <h3>${escapeHtml(signal.title)}</h3>
+      <p>${escapeHtml(signal.summary)}</p>
+      <div class="signal-tags">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>
+    </article>
+  `;
+}
+
+function renderHomeSignals() {
+  const list = $("#homeSignals");
+  if (!list) return;
+  list.innerHTML = updates.slice(0, 4).map((signal) => createSignalCard(signal, true)).join("");
+  initReveal();
+}
+
+function renderUpdatesPage() {
+  const grid = $("#updatesGrid");
+  if (!grid) return;
+  const filtered = updates.filter((signal) => activeSignalFilter === "all" || signalTypeClass(signal.type) === activeSignalFilter || (signal.tags || []).some((tag) => signalTypeClass(tag) === activeSignalFilter));
+  grid.innerHTML = filtered.map((signal) => createSignalCard(signal)).join("");
+  const count = $("#signalsCount");
+  if (count) count.textContent = String(filtered.length).padStart(2, "0");
+  initReveal();
+}
+
+function initSignalFilters() {
+  const buttons = $$(".signal-filter-btn");
+  if (!buttons.length) return;
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      activeSignalFilter = button.dataset.signalFilter || "all";
+      buttons.forEach((btn) => btn.classList.toggle("active", btn === button));
+      renderUpdatesPage();
+    });
+  });
 }
 
 function initFilters() {
@@ -398,6 +585,8 @@ function commandHelp() {
     <div class="command-row"><span><b>open portfolio</b><br/>Professional profile route</span><button data-route="portfolio">RUN</button></div>
     <div class="command-row"><span><b>open tk</b><br/>TK Service field tool</span><button data-route="tk">RUN</button></div>
     <div class="command-row"><span><b>open ai</b><br/>Instagram AI Manager</span><button data-route="ai">RUN</button></div>
+    <div class="command-row"><span><b>signals</b><br/>Open updates and build signals</span><button data-route="signals">RUN</button></div>
+    <div class="command-row"><span><b>subscribe</b><br/>Open Signals intake surface</span><button data-route="subscribe">RUN</button></div>
     <div class="command-row"><span><b>status</b><br/>Open systems status page</span><button data-route="status">RUN</button></div>
     <div class="command-row"><span><b>doctrine</b><br/>Open division doctrine</span><button data-route="doctrine">RUN</button></div>
   `;
@@ -418,6 +607,7 @@ function runCommand(raw) {
   const alias = {
     lknzmzd: "lab",
     engineering: "lab",
+    lab: "lab",
     portfolio: "portfolio",
     cv: "portfolio",
     tkservice: "tk",
@@ -430,6 +620,12 @@ function runCommand(raw) {
     docs: "doctrine",
     doctrine: "doctrine",
     status: "status",
+    update: "signals",
+    updates: "signals",
+    signal: "signals",
+    signals: "signals",
+    subscribe: "subscribe",
+    subscription: "subscribe",
     home: "home"
   }[normalized];
 
@@ -440,6 +636,12 @@ function runCommand(raw) {
 
   if (input === "modules") {
     output.innerHTML = systems.map((m) => `<div class="command-row"><span><b>${escapeHtml(m.id)} / ${escapeHtml(m.name)}</b><br/>${escapeHtml(m.status)} · ${escapeHtml(m.type)}</span><button data-url="${escapeHtml(m.url)}">OPEN</button></div>`).join("");
+    wireCommandButtons();
+    return;
+  }
+
+  if (input === "latest" || input === "feed") {
+    output.innerHTML = updates.slice(0, 5).map((s) => `<div class="command-row"><span><b>${escapeHtml(s.id)} / ${escapeHtml(s.title)}</b><br/>${escapeHtml(s.date)} · ${escapeHtml(s.type)} · ${escapeHtml(s.module)}</span><button data-route="signals">VIEW</button></div>`).join("");
     wireCommandButtons();
     return;
   }
@@ -503,6 +705,81 @@ function initCommandPalette() {
   wireCommandButtons();
 }
 
+function initSubscribeForm() {
+  const form = $("#subscribeForm");
+  const output = $("#subscribeOutput");
+  if (!form || !output) return;
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const formData = new FormData(form);
+    const email = String(formData.get("email") || "").trim().toLowerCase();
+    const interests = formData.getAll("interests").map(String);
+    const honeypot = String(formData.get("company") || "").trim();
+    const consent = formData.get("consent") === "yes";
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    if (honeypot) {
+      output.innerHTML = `<p class="form-error">Bot check failed. Submission ignored.</p>`;
+      return;
+    }
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      output.innerHTML = `<p class="form-error">Invalid email format. Fix the input before sending signal access.</p>`;
+      return;
+    }
+
+    if (!consent) {
+      output.innerHTML = `<p class="form-error">Consent is required before storing this subscription request.</p>`;
+      return;
+    }
+
+    const payload = {
+      email,
+      interests: interests.length ? interests : ["All Updates"],
+      source: "lknzmzd.xyz/v2.5-signals",
+      consent_version: "signals-v1",
+      referrer: document.referrer || "direct",
+      created_at: new Date().toISOString()
+    };
+
+    if (SIGNALS_ENDPOINT) {
+      try {
+        output.innerHTML = `<p class="form-pending">Transmitting signal subscription...</p>`;
+        if (submitButton) submitButton.disabled = true;
+        const response = await fetch(SIGNALS_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.ok === false) throw new Error(result.error || `Endpoint returned ${response.status}`);
+        output.innerHTML = `<p class="form-success"><b>Signal subscription received.</b> Backend endpoint accepted the intake. Check the Supabase table for the new subscriber row.</p>`;
+        form.reset();
+        return;
+      } catch (error) {
+        output.innerHTML = `<p class="form-error">Backend endpoint failed: ${escapeHtml(error.message || "unknown error")}. Static fallback prepared below.</p>`;
+      } finally {
+        if (submitButton) submitButton.disabled = false;
+      }
+    }
+
+    const existing = JSON.parse(localStorage.getItem("lknzmzd-signal-intake") || "[]");
+    existing.push(payload);
+    localStorage.setItem("lknzmzd-signal-intake", JSON.stringify(existing.slice(-25)));
+
+    const subject = encodeURIComponent("LKNZMZD Signals subscription request");
+    const body = encodeURIComponent(`Subscribe request\n\nEmail: ${payload.email}\nInterests: ${payload.interests.join(", ")}\nSource: ${payload.source}\nCreated: ${payload.created_at}`);
+    const mailto = `mailto:${SIGNALS_CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+
+    output.innerHTML = `
+      <p class="form-success"><b>Static intake staged.</b> This GitHub Pages site has no database yet. Click the fallback link to send the subscription request by email.</p>
+      <a class="module-link subscribe-mailto" href="${mailto}"><span>SEND SUBSCRIPTION REQUEST</span><span>→</span></a>
+      <p class="form-note">V2.5 is configured for a Cloudflare Worker + Supabase backend. If the Worker is not deployed yet, this fallback still lets you capture the request manually.</p>
+    `;
+  });
+}
+
 function initServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname);
@@ -515,10 +792,14 @@ function initServiceWorker() {
 async function init() {
   initBoot();
   initCanvas();
-  await loadSystems();
+  await Promise.all([loadSystems(), loadUpdates()]);
   renderModules();
   renderStatusPage();
+  renderHomeSignals();
+  renderUpdatesPage();
   initFilters();
+  initSignalFilters();
+  initSubscribeForm();
   initReveal();
   initCommandPalette();
   initServiceWorker();

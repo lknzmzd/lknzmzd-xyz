@@ -1,59 +1,81 @@
-# LKNZMZD.XYZ V2.3.1 — Systems Gateway
+# LKNZMZD.XYZ V2.5 — Signals Backend Layer
 
-Static public gateway for the LKNZMZD ecosystem.
+V2.5 upgrades the V2.4 Signals Layer from a static subscription surface into a real backend-ready system.
 
-## What changed in V2
+## What V2.5 adds
 
-- Rebuilt the page from a link hub into a systems gateway.
-- Added module-driven architecture using `systems.json`.
-- Added command palette: `Ctrl+K`, `/`, or the top-right command button.
-- Added module filtering by layer.
-- Added `status.html` for public route/status overview.
-- Upgraded `division.html` into a stronger system doctrine page.
-- Removed the empty `Three.js` placeholder file.
-- Removed runtime dependency on CDN Three.js; background now uses local canvas JS.
-- Added missing PWA icons and OG image.
-- Fixed sitemap to include all public pages.
-- Set CNAME to apex domain: `lknzmzd.xyz`.
+- `subscribe.html` now posts to `https://signals.lknzmzd.xyz/subscribe`.
+- Cloudflare Worker API template in `/backend`.
+- Supabase subscriber schema and event log.
+- Honeypot bot check.
+- CORS allowlist for `lknzmzd.xyz` and `www.lknzmzd.xyz`.
+- Optional Cloudflare Turnstile verification support.
+- Optional IP hashing support without storing raw IP addresses.
+- `/health` endpoint for backend verification.
+- Frontend fallback still exists if the Worker is not deployed yet.
 
-## Deploy
+## Static deployment
 
-Upload all files in this folder to the root of the GitHub Pages repository or replace the existing repository contents.
+Upload all root files directly to the `lknzmzd-xyz` GitHub repo root:
 
-If your GitHub Pages custom domain is configured as `www.lknzmzd.xyz`, change the `CNAME` file back to:
-
-```txt
-www.lknzmzd.xyz
+```text
+index.html
+style.css
+main.js
+systems.json
+updates.json
+subscribe.html
+updates.html
+status.html
+division.html
+privacy.html
+backend/
 ```
 
-Otherwise keep:
+Do not upload the ZIP as a nested folder.
 
-```txt
-lknzmzd.xyz
+## Backend deployment
+
+Read:
+
+```text
+/backend/README.md
 ```
 
-## Main files
+Fast path:
 
-- `index.html` — systems gateway home
-- `systems.json` — module data source
-- `status.html` — route/status overview
-- `division.html` — system doctrine
-- `style.css` — full visual system
-- `main.js` — canvas background, cards, filters, command palette
+1. Run `/backend/supabase-signals-subscribers.sql` in Supabase SQL Editor.
+2. Deploy `/backend/worker-subscribe-template.js` as a Cloudflare Worker.
+3. Set Worker secrets:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `IP_HASH_SECRET`
+4. Bind Worker custom domain:
 
-## V2.1 update
+```text
+signals.lknzmzd.xyz
+```
 
-Restored the identity morph intro: `ILKIN AZIMZADE` compresses into `LKNZMZD` before the gateway loads. Add `?intro=1` to replay it in the same browser session.
+5. Test:
 
+```text
+https://signals.lknzmzd.xyz/health
+```
 
-## V2.3 intro cleanup
+## Current endpoint
 
-- Restored a clean full-screen identity morph layer.
-- Suppressed background page content during boot to avoid visible text bleed.
-- Added a subtle abstract boot atmosphere instead of showing underlying page words.
+The subscription form uses:
 
+```text
+https://signals.lknzmzd.xyz/subscribe
+```
 
-## V2.3 intro cleanup
-- Removed the framed/square boot panel.
-- Rebuilt the opening as a clean full-screen identity morph.
-- Kept the ILKIN AZIMZADE → LKNZMZD transformation without background content bleed.
+You can change this in `subscribe.html`:
+
+```html
+<meta name="signals-endpoint" content="https://signals.lknzmzd.xyz/subscribe" />
+```
+
+## Version
+
+`LKNZMZD.XYZ / V2.5.0`

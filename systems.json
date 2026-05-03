@@ -84,6 +84,18 @@
     "output": "experimental visual feed"
   },
   {
+    "id": "SIG-01",
+    "name": "LKNZMZD Signals",
+    "layer": "public",
+    "type": "Signals / Update Layer",
+    "status": "ACTIVE",
+    "url": "./updates.html",
+    "description": "Public changelog and subscription surface for project updates, build logs, tool releases, robotics experiments, and system changes.",
+    "input": "project changes, build logs, releases, field notes",
+    "process": "classify, compress, publish, notify",
+    "output": "signals feed + subscription intake"
+  },
+  {
     "id": "DOC-01",
     "name": "Division Doctrine",
     "layer": "public",
@@ -94,5 +106,17 @@
     "input": "principles, constraints, direction",
     "process": "define, compress, enforce",
     "output": "system doctrine"
+  },
+  {
+    "id": "SIG-02",
+    "name": "Signals Backend",
+    "layer": "backend",
+    "type": "Cloudflare Worker + Supabase",
+    "status": "BACKEND READY",
+    "url": "./subscribe.html",
+    "description": "Subscription intake endpoint for LKNZMZD Signals, using a Worker API and Supabase subscriber storage.",
+    "input": "email, interests, consent metadata",
+    "process": "validate, protect, upsert, log event",
+    "output": "active subscriber records"
   }
 ]

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>LKNZMZD Signals — Updates + Build Logs</title>
+  <meta name="description" content="LKNZMZD Signals is the public update archive for project releases, build logs, robotics experiments, AI workflows, tooling changes, and field notes." />
+  <link rel="canonical" href="https://lknzmzd.xyz/updates.html" />
+  <meta name="theme-color" content="#02060a" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="LKNZMZD Signals" />
+  <meta property="og:description" content="Project updates, build logs, tool releases, robotics experiments, AI workflows, and system changes." />
+  <meta property="og:url" content="https://lknzmzd.xyz/updates.html" />
+  <meta property="og:image" content="https://lknzmzd.xyz/assets/og-lknzmzd.png" />
+  <link rel="stylesheet" href="./style.css?v=2.5.0" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+</head>
+<body data-page="updates">
+  <canvas id="systemCanvas" aria-hidden="true"></canvas>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="scanline" aria-hidden="true"></div>
+
+  <header class="topbar" aria-label="LKNZMZD system header">
+    <a class="brand" href="./index.html" aria-label="LKNZMZD home">
+      <span class="brand-mark">L</span>
+      <span><strong>LKNZMZD.XYZ</strong><small>SIGNALS / V2.5</small></span>
+    </a>
+    <nav class="topnav" aria-label="Primary navigation">
+      <a href="./index.html#modules">Modules</a>
+      <a href="./updates.html">Signals</a>
+      <a href="./subscribe.html">Subscribe</a>
+      <a href="./status.html">Status</a>
+      <a href="./division.html">Doctrine</a>
+    </nav>
+    <div class="top-actions">
+      <button class="ghost-btn" id="openCommand" type="button"><span>CTRL</span><span>K</span></button>
+      <a class="primary-link" href="./subscribe.html">Subscribe</a>
+    </div>
+  </header>
+
+  <main class="doc-shell signals-shell">
+    <section class="doc-card signals-hero-card reveal">
+      <div class="eyebrow"><span class="pulse-dot"></span> SIG-01 / PUBLIC UPDATE LAYER</div>
+      <h1>LKNZMZD Signals</h1>
+      <p class="lead">Project updates, build logs, tool releases, robotics experiments, AI workflow notes, and system changes compressed into a public signal archive.</p>
+      <div class="status-strip" style="margin:26px 0 0">
+        <div><span>SIGNALS</span><strong id="signalsCount">00</strong></div>
+        <div><span>MODE</span><strong>PUBLIC</strong></div>
+        <div><span>VERSION</span><strong>2.5.0</strong></div>
+        <div><span>SUBSCRIBE</span><strong>READY</strong></div>
+      </div>
+    </section>
+
+    <section class="module-toolbar signal-toolbar reveal" aria-label="Signal filters">
+      <button class="signal-filter-btn active" type="button" data-signal-filter="all">All</button>
+      <button class="signal-filter-btn" type="button" data-signal-filter="release">Release</button>
+      <button class="signal-filter-btn" type="button" data-signal-filter="tooling">Tooling</button>
+      <button class="signal-filter-btn" type="button" data-signal-filter="robotics">Robotics</button>
+      <button class="signal-filter-btn" type="button" data-signal-filter="ai">AI</button>
+      <button class="signal-filter-btn" type="button" data-signal-filter="field-ops">Field Ops</button>
+      <button class="signal-filter-btn" type="button" data-signal-filter="system">System</button>
+      <button class="signal-filter-btn" type="button" data-signal-filter="lab">Lab</button>
+    </section>
+
+    <section class="updates-grid" id="updatesGrid" aria-live="polite"></section>
+
+    <section class="doc-card signal-subscribe-band reveal">
+      <div>
+        <span class="eyebrow">SIGNAL INTAKE</span>
+        <h2>Do not just watch the system. Subscribe to the output.</h2>
+        <p>Receive future releases, build notes, robotics updates, AI workflow progress, and field-tool improvements.</p>
+      </div>
+      <a class="cta" href="./subscribe.html">Subscribe to Signals</a>
+    </section>
+  </main>
+
+  <dialog class="command-dialog" id="commandDialog" aria-label="Command palette">
+    <div class="command-shell">
+      <div class="command-top"><span>COMMAND PALETTE</span><button type="button" id="closeCommand">×</button></div>
+      <input id="commandInput" type="text" autocomplete="off" spellcheck="false" placeholder="Type: open lab, signals, subscribe, status, doctrine, help..." />
+      <div class="command-output" id="commandOutput"><p><b>ready</b> — try <code>open lab</code>, <code>signals</code>, <code>subscribe</code>, or <code>help</code>.</p></div>
+    </div>
+  </dialog>
+  <script src="./main.js?v=2.5.0" type="module"></script>
+</body>
+</html>

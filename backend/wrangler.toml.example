@@ -1,0 +1,17 @@
+name = "lknzmzd-signals-worker"
+main = "worker-subscribe-template.js"
+compatibility_date = "2025-08-01"
+
+# Add the custom domain in the Cloudflare dashboard:
+# Workers & Pages → this Worker → Settings → Domains & Routes → Add Custom Domain
+# signals.lknzmzd.xyz
+
+[vars]
+ALLOWED_ORIGINS = "https://lknzmzd.xyz,https://www.lknzmzd.xyz"
+
+# Set secrets with:
+# wrangler secret put SUPABASE_URL
+# wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+# wrangler secret put IP_HASH_SECRET
+# Optional later:
+# wrangler secret put TURNSTILE_SECRET_KEY

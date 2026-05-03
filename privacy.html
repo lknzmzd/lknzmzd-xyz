@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>LKNZMZD Signals Privacy</title>
+  <link rel="stylesheet" href="./style.css?v=2.5.0" />
+</head>
+<body data-page="privacy">
+  <main class="doc-shell">
+    <section class="doc-card reveal">
+      <div class="eyebrow"><span class="pulse-dot"></span> SIG-PRIVACY / V2.5</div>
+      <h1>Signals Privacy</h1>
+      <p class="lead">The V2.5 subscription layer stores only the minimum information required to operate LKNZMZD Signals.</p>
+      <p>When the Cloudflare Worker backend is connected, the system stores email address, selected interests, subscription status, source page, consent version, timestamps, and optional non-reversible IP hash if configured. It does not need to store raw IP addresses.</p>
+      <p>Subscriber data is stored in Supabase and is not exposed through public browser keys. Public writes are disabled; the Cloudflare Worker writes using a server-side service role key.</p>
+      <p>To unsubscribe or request removal before a self-service unsubscribe endpoint exists, email <a class="text-link" href="mailto:ilkinazimzade@lknzmzd.com">ilkinazimzade@lknzmzd.com</a>.</p>
+      <a class="module-link" href="./index.html"><span>RETURN HOME</span><span>→</span></a>
+    </section>
+  </main>
+  <script src="./main.js?v=2.5.0" type="module"></script>
+</body>
+</html>
