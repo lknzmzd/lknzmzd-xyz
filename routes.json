@@ -11,5 +11,9 @@
   "updates": "./updates.html",
   "subscribe": "./subscribe.html",
   "backend": "./backend/README.md",
-  "health": "https://signals.lknzmzd.xyz/health"
+  "health": "https://signals.lknzmzd.xyz/health",
+  "unsubscribe": "./unsubscribe.html",
+  "admin": "./admin.html",
+  "count": "https://signals.lknzmzd.xyz/count",
+  "export": "https://signals.lknzmzd.xyz/admin/export"
 }

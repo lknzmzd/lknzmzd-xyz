@@ -11,17 +11,17 @@ const FALLBACK_SYSTEMS = [
 
 const FALLBACK_UPDATES = [
   {
-    "id": "SIGNAL-001",
+    "id": "SIGNAL-000",
     "date": "2026-05-03",
     "type": "RELEASE",
-    "module": "LKNZMZD.XYZ",
-    "status": "LIVE",
-    "title": "Signals backend V2.5 prepared",
-    "summary": "Cloudflare Worker subscription endpoint, Supabase subscriber schema, CORS protection, honeypot handling, optional Turnstile support, and frontend endpoint wiring were added.",
+    "module": "LKNZMZD Signals",
+    "status": "EMAIL READY",
+    "title": "Email Sending Integration V2.7 prepared",
+    "summary": "LKNZMZD Signals now includes Resend email integration, test sends, controlled broadcasts, campaign logs, delivery logs, and tokenized unsubscribe links in every email.",
     "tags": [
       "SYSTEM",
       "RELEASE",
-      "SIGNALS"
+      "EMAIL"
     ]
   },
   {
@@ -135,10 +135,21 @@ const ROUTES = {
   updates: "./updates.html",
   signals: "./updates.html",
   subscribe: "./subscribe.html",
+  unsubscribe: "./unsubscribe.html",
+  admin: "./admin.html",
   home: "./index.html"
 };
 
 const SIGNALS_ENDPOINT = document.querySelector('meta[name="signals-endpoint"]')?.getAttribute("content")?.trim() || "https://signals.lknzmzd.xyz/subscribe";
+const SIGNALS_BASE = document.querySelector('meta[name="signals-base"]')?.getAttribute("content")?.trim() || SIGNALS_ENDPOINT.replace(/\/subscribe\/?$/, "");
+const UNSUBSCRIBE_ENDPOINT = `${SIGNALS_BASE}/unsubscribe`;
+const SIGNALS_COUNT_ENDPOINT = `${SIGNALS_BASE}/count`;
+const ADMIN_COUNTS_ENDPOINT = `${SIGNALS_BASE}/admin/counts`;
+const ADMIN_EXPORT_ENDPOINT = `${SIGNALS_BASE}/admin/export`;
+const ADMIN_EMAIL_STATUS_ENDPOINT = `${SIGNALS_BASE}/admin/email/status`;
+const ADMIN_EMAIL_TEST_ENDPOINT = `${SIGNALS_BASE}/admin/email/test`;
+const ADMIN_EMAIL_BROADCAST_ENDPOINT = `${SIGNALS_BASE}/admin/email/broadcast`;
+const ADMIN_CAMPAIGNS_ENDPOINT = `${SIGNALS_BASE}/admin/campaigns`;
 const SIGNALS_CONTACT_EMAIL = "ilkinazimzade@lknzmzd.com";
 
 let systems = FALLBACK_SYSTEMS;
@@ -587,6 +598,8 @@ function commandHelp() {
     <div class="command-row"><span><b>open ai</b><br/>Instagram AI Manager</span><button data-route="ai">RUN</button></div>
     <div class="command-row"><span><b>signals</b><br/>Open updates and build signals</span><button data-route="signals">RUN</button></div>
     <div class="command-row"><span><b>subscribe</b><br/>Open Signals intake surface</span><button data-route="subscribe">RUN</button></div>
+    <div class="command-row"><span><b>unsubscribe</b><br/>Open Signals removal surface</span><button data-route="unsubscribe">RUN</button></div>
+    <div class="command-row"><span><b>admin</b><br/>Open protected subscriber control</span><button data-route="admin">RUN</button></div>
     <div class="command-row"><span><b>status</b><br/>Open systems status page</span><button data-route="status">RUN</button></div>
     <div class="command-row"><span><b>doctrine</b><br/>Open division doctrine</span><button data-route="doctrine">RUN</button></div>
   `;
@@ -626,6 +639,10 @@ function runCommand(raw) {
     signals: "signals",
     subscribe: "subscribe",
     subscription: "subscribe",
+    unsubscribe: "unsubscribe",
+    remove: "unsubscribe",
+    admin: "admin",
+    control: "admin",
     home: "home"
   }[normalized];
 
@@ -737,7 +754,7 @@ function initSubscribeForm() {
     const payload = {
       email,
       interests: interests.length ? interests : ["All Updates"],
-      source: "lknzmzd.xyz/v2.5-signals",
+      source: "lknzmzd.xyz/v2.7-signals",
       consent_version: "signals-v1",
       referrer: document.referrer || "direct",
       created_at: new Date().toISOString()
@@ -754,7 +771,8 @@ function initSubscribeForm() {
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok || result.ok === false) throw new Error(result.error || `Endpoint returned ${response.status}`);
-        output.innerHTML = `<p class="form-success"><b>Signal subscription received.</b> Backend endpoint accepted the intake. Check the Supabase table for the new subscriber row.</p>`;
+        const modeText = result.mode === "resubscribe" ? "Subscription reactivated." : result.duplicate ? "Subscription updated." : "Signal subscription received.";
+        output.innerHTML = `<p class="form-success"><b>${escapeHtml(modeText)}</b> Backend accepted the request. Mode: <code>${escapeHtml(result.mode || "subscribe")}</code>.</p>`;
         form.reset();
         return;
       } catch (error) {
@@ -775,8 +793,214 @@ function initSubscribeForm() {
     output.innerHTML = `
       <p class="form-success"><b>Static intake staged.</b> This GitHub Pages site has no database yet. Click the fallback link to send the subscription request by email.</p>
       <a class="module-link subscribe-mailto" href="${mailto}"><span>SEND SUBSCRIPTION REQUEST</span><span>→</span></a>
-      <p class="form-note">V2.5 is configured for a Cloudflare Worker + Supabase backend. If the Worker is not deployed yet, this fallback still lets you capture the request manually.</p>
+      <p class="form-note">V2.7 is configured for a Cloudflare Worker + Supabase backend. If the Worker is not deployed yet, this fallback still lets you capture the request manually.</p>
     `;
+  });
+}
+
+function initUnsubscribeForm() {
+  const form = $("#unsubscribeForm");
+  const output = $("#unsubscribeOutput");
+  if (!form || !output) return;
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const formData = new FormData(form);
+    const email = String(formData.get("email") || "").trim().toLowerCase();
+    const token = String(formData.get("token") || "").trim();
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      output.innerHTML = `<p class="form-error">Invalid email format. Fix the input before sending unsubscribe request.</p>`;
+      return;
+    }
+
+    try {
+      output.innerHTML = `<p class="form-pending">Transmitting unsubscribe request...</p>`;
+      if (submitButton) submitButton.disabled = true;
+      const response = await fetch(UNSUBSCRIBE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, token, source: "lknzmzd.xyz/unsubscribe" })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.ok === false) throw new Error(result.error || `Endpoint returned ${response.status}`);
+      output.innerHTML = `<p class="form-success"><b>Unsubscribe request accepted.</b> Status: <code>${escapeHtml(result.status || "unsubscribed")}</code>.</p>`;
+      form.reset();
+    } catch (error) {
+      output.innerHTML = `<p class="form-error">Unsubscribe failed: ${escapeHtml(error.message || "unknown error")}. Email ${SIGNALS_CONTACT_EMAIL} if the issue continues.</p>`;
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+    }
+  });
+}
+
+function initAdminPanel() {
+  const form = $("#adminForm");
+  const output = $("#adminOutput");
+  const countsBtn = $("#adminLoadCounts");
+  const csvBtn = $("#adminExportCsv");
+  const jsonBtn = $("#adminExportJson");
+  const emailStatusBtn = $("#adminEmailStatus");
+  const sendTestBtn = $("#adminSendTest");
+  const sendBroadcastBtn = $("#adminSendBroadcast");
+  const campaignsBtn = $("#adminLoadCampaigns");
+  if (!form || !output) return;
+
+  const getForm = () => new FormData(form);
+  const getToken = () => String(getForm().get("adminToken") || "").trim();
+  const headers = () => ({ Authorization: `Bearer ${getToken()}` });
+  const jsonHeaders = () => ({ ...headers(), "Content-Type": "application/json" });
+
+  async function requireToken() {
+    if (!getToken()) throw new Error("Admin token is required.");
+  }
+
+  function getEmailPayload(mode = "test") {
+    const data = getForm();
+    return {
+      to: String(data.get("testTo") || "").trim(),
+      subject: String(data.get("emailSubject") || "").trim(),
+      title: String(data.get("emailTitle") || "").trim(),
+      preheader: String(data.get("emailPreheader") || "").trim(),
+      body_text: String(data.get("emailBody") || "").trim(),
+      cta_url: String(data.get("ctaUrl") || "https://lknzmzd.xyz/updates.html").trim(),
+      cta_label: String(data.get("ctaLabel") || "Open Signals Feed").trim(),
+      limit: Number(data.get("broadcastLimit") || 50),
+      confirm: mode === "broadcast" ? String(data.get("broadcastConfirm") || "").trim() : undefined,
+      status: "active"
+    };
+  }
+
+  countsBtn?.addEventListener("click", async () => {
+    try {
+      await requireToken();
+      output.innerHTML = `<p class="form-pending">Loading subscriber counts...</p>`;
+      const response = await fetch(ADMIN_COUNTS_ENDPOINT, { headers: headers() });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.ok === false) throw new Error(result.error || `Endpoint returned ${response.status}`);
+      const counts = result.counts || {};
+      output.innerHTML = `
+        <div class="admin-count-grid">
+          <div><span>ACTIVE</span><strong>${Number(counts.active || 0)}</strong></div>
+          <div><span>UNSUB</span><strong>${Number(counts.unsubscribed || 0)}</strong></div>
+          <div><span>BOUNCED</span><strong>${Number(counts.bounced || 0)}</strong></div>
+          <div><span>TOTAL</span><strong>${Number(counts.total || 0)}</strong></div>
+        </div>
+        <p class="form-note">Generated: ${escapeHtml(result.generated_at || new Date().toISOString())}</p>
+      `;
+    } catch (error) {
+      output.innerHTML = `<p class="form-error">Admin count failed: ${escapeHtml(error.message || "unknown error")}</p>`;
+    }
+  });
+
+  csvBtn?.addEventListener("click", async () => {
+    try {
+      await requireToken();
+      output.innerHTML = `<p class="form-pending">Preparing CSV export...</p>`;
+      const response = await fetch(`${ADMIN_EXPORT_ENDPOINT}?format=csv&status=active`, { headers: headers() });
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error || `Endpoint returned ${response.status}`);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `lknzmzd-signals-active-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.append(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      output.innerHTML = `<p class="form-success"><b>CSV export generated.</b> Active subscriber file downloaded.</p>`;
+    } catch (error) {
+      output.innerHTML = `<p class="form-error">CSV export failed: ${escapeHtml(error.message || "unknown error")}</p>`;
+    }
+  });
+
+  jsonBtn?.addEventListener("click", async () => {
+    try {
+      await requireToken();
+      output.innerHTML = `<p class="form-pending">Loading JSON preview...</p>`;
+      const response = await fetch(`${ADMIN_EXPORT_ENDPOINT}?format=json&status=all`, { headers: headers() });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.ok === false) throw new Error(result.error || `Endpoint returned ${response.status}`);
+      output.innerHTML = `<pre class="admin-json">${escapeHtml(JSON.stringify(result, null, 2))}</pre>`;
+    } catch (error) {
+      output.innerHTML = `<p class="form-error">JSON preview failed: ${escapeHtml(error.message || "unknown error")}</p>`;
+    }
+  });
+
+  emailStatusBtn?.addEventListener("click", async () => {
+    try {
+      await requireToken();
+      output.innerHTML = `<p class="form-pending">Checking email provider configuration...</p>`;
+      const response = await fetch(ADMIN_EMAIL_STATUS_ENDPOINT, { headers: headers() });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.ok === false) throw new Error(result.error || `Endpoint returned ${response.status}`);
+      output.innerHTML = `
+        <div class="email-status-grid">
+          <div><span>PROVIDER</span><strong>${escapeHtml(result.provider || "unknown")}</strong></div>
+          <div><span>SENDING</span><strong>${result.sending_enabled ? "ENABLED" : "DISABLED"}</strong></div>
+          <div><span>DRY RUN</span><strong>${result.dry_run ? "YES" : "NO"}</strong></div>
+          <div><span>RESEND KEY</span><strong>${result.resend_configured ? "SET" : "MISSING"}</strong></div>
+        </div>
+        <p class="form-note">Public base: <code>${escapeHtml(result.public_base || SIGNALS_BASE)}</code></p>
+      `;
+    } catch (error) {
+      output.innerHTML = `<p class="form-error">Email status failed: ${escapeHtml(error.message || "unknown error")}</p>`;
+    }
+  });
+
+  sendTestBtn?.addEventListener("click", async () => {
+    try {
+      await requireToken();
+      const payload = getEmailPayload("test");
+      if (!/^\S+@\S+\.\S+$/.test(payload.to)) throw new Error("Valid test recipient is required.");
+      output.innerHTML = `<p class="form-pending">Sending test email...</p>`;
+      const response = await fetch(ADMIN_EMAIL_TEST_ENDPOINT, {
+        method: "POST",
+        headers: jsonHeaders(),
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.ok === false) throw new Error(result.error || `Endpoint returned ${response.status}`);
+      output.innerHTML = `<p class="form-success"><b>Test email ${escapeHtml(result.mode || "sent")}.</b> Campaign: <code>${escapeHtml(result.campaign_id || "n/a")}</code></p>`;
+    } catch (error) {
+      output.innerHTML = `<p class="form-error">Test send failed: ${escapeHtml(error.message || "unknown error")}</p>`;
+    }
+  });
+
+  sendBroadcastBtn?.addEventListener("click", async () => {
+    try {
+      await requireToken();
+      const payload = getEmailPayload("broadcast");
+      if (payload.confirm !== "SEND_LKNZMZD_SIGNAL") throw new Error("Broadcast confirmation phrase must be SEND_LKNZMZD_SIGNAL.");
+      output.innerHTML = `<p class="form-pending">Broadcast request accepted. Sending to active subscribers...</p>`;
+      const response = await fetch(ADMIN_EMAIL_BROADCAST_ENDPOINT, {
+        method: "POST",
+        headers: jsonHeaders(),
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.ok === false) throw new Error(result.error || `Endpoint returned ${response.status}`);
+      output.innerHTML = `<p class="form-success"><b>Broadcast ${escapeHtml(result.mode || "completed")}.</b> Target: ${Number(result.target_count || 0)}, sent: ${Number(result.sent_count || 0)}, failed: ${Number(result.failed_count || 0)}. Campaign: <code>${escapeHtml(result.campaign_id || "n/a")}</code></p>`;
+    } catch (error) {
+      output.innerHTML = `<p class="form-error">Broadcast failed: ${escapeHtml(error.message || "unknown error")}</p>`;
+    }
+  });
+
+  campaignsBtn?.addEventListener("click", async () => {
+    try {
+      await requireToken();
+      output.innerHTML = `<p class="form-pending">Loading campaign logs...</p>`;
+      const response = await fetch(`${ADMIN_CAMPAIGNS_ENDPOINT}?limit=20`, { headers: headers() });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.ok === false) throw new Error(result.error || `Endpoint returned ${response.status}`);
+      output.innerHTML = `<pre class="admin-json">${escapeHtml(JSON.stringify(result, null, 2))}</pre>`;
+    } catch (error) {
+      output.innerHTML = `<p class="form-error">Campaign fetch failed: ${escapeHtml(error.message || "unknown error")}</p>`;
+    }
   });
 }
 
@@ -800,6 +1024,8 @@ async function init() {
   initFilters();
   initSignalFilters();
   initSubscribeForm();
+  initUnsubscribeForm();
+  initAdminPanel();
   initReveal();
   initCommandPalette();
   initServiceWorker();

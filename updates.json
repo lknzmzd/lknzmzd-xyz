@@ -4,6 +4,23 @@
     "date": "2026-05-03",
     "type": "RELEASE",
     "module": "LKNZMZD Signals",
+    "status": "EMAIL READY",
+    "title": "Email Sending Integration V2.7 prepared",
+    "summary": "LKNZMZD Signals now includes Resend email integration, test sends, controlled broadcasts, campaign logs, delivery logs, dry-run mode, and tokenized unsubscribe links in every email.",
+    "tags": [
+      "SYSTEM",
+      "RELEASE",
+      "EMAIL",
+      "RESEND",
+      "CLOUDFLARE",
+      "SUPABASE"
+    ]
+  },
+  {
+    "id": "SIGNAL-001",
+    "date": "2026-05-03",
+    "type": "RELEASE",
+    "module": "LKNZMZD Signals",
     "status": "BACKEND READY",
     "title": "Signals backend V2.5 prepared",
     "summary": "Cloudflare Worker subscription endpoint, Supabase subscriber schema, CORS protection, honeypot handling, optional Turnstile support, and frontend endpoint wiring were added.",
@@ -16,7 +33,7 @@
     ]
   },
   {
-    "id": "SIGNAL-001",
+    "id": "SIGNAL-002",
     "date": "2026-05-03",
     "type": "RELEASE",
     "module": "LKNZMZD.XYZ",
@@ -30,7 +47,7 @@
     ]
   },
   {
-    "id": "SIGNAL-002",
+    "id": "SIGNAL-003",
     "date": "2026-05-03",
     "type": "RELEASE",
     "module": "LKNZMZD.XYZ",
@@ -44,7 +61,7 @@
     ]
   },
   {
-    "id": "SIGNAL-003",
+    "id": "SIGNAL-004",
     "date": "2026-05-02",
     "type": "TOOLING",
     "module": "ShiftLog",
@@ -58,7 +75,7 @@
     ]
   },
   {
-    "id": "SIGNAL-004",
+    "id": "SIGNAL-005",
     "date": "2026-05-01",
     "type": "FIELD OPS",
     "module": "TK Service Tool",
@@ -72,7 +89,7 @@
     ]
   },
   {
-    "id": "SIGNAL-005",
+    "id": "SIGNAL-006",
     "date": "2026-04-29",
     "type": "AI",
     "module": "Instagram AI Manager",
@@ -86,7 +103,7 @@
     ]
   },
   {
-    "id": "SIGNAL-006",
+    "id": "SIGNAL-007",
     "date": "2026-04-25",
     "type": "SYSTEM",
     "module": "Obsidian AI Bridge",
@@ -100,7 +117,7 @@
     ]
   },
   {
-    "id": "SIGNAL-007",
+    "id": "SIGNAL-008",
     "date": "2026-04-18",
     "type": "ROBOTICS",
     "module": "Observer / Robotics Layer",
@@ -114,7 +131,7 @@
     ]
   },
   {
-    "id": "SIGNAL-008",
+    "id": "SIGNAL-009",
     "date": "2026-04-01",
     "type": "LAB",
     "module": "Noctivis Lab",

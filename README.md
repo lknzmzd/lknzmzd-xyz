@@ -1,22 +1,40 @@
-# LKNZMZD.XYZ V2.5 — Signals Backend Layer
+# LKNZMZD.XYZ V2.7 — Email Sending Integration
 
-V2.5 upgrades the V2.4 Signals Layer from a static subscription surface into a real backend-ready system.
+V2.7 upgrades the working V2.6 subscriber control layer into a controlled email sending layer.
 
-## What V2.5 adds
+## What V2.7 adds
 
-- `subscribe.html` now posts to `https://signals.lknzmzd.xyz/subscribe`.
-- Cloudflare Worker API template in `/backend`.
-- Supabase subscriber schema and event log.
-- Honeypot bot check.
-- CORS allowlist for `lknzmzd.xyz` and `www.lknzmzd.xyz`.
-- Optional Cloudflare Turnstile verification support.
-- Optional IP hashing support without storing raw IP addresses.
-- `/health` endpoint for backend verification.
-- Frontend fallback still exists if the Worker is not deployed yet.
+- Resend REST API integration for Cloudflare Workers.
+- Test email endpoint and admin UI button.
+- Controlled broadcast endpoint for active subscribers.
+- `EMAIL_DRY_RUN` mode so you can test the pipeline without sending real email.
+- Campaign logs in Supabase.
+- Delivery logs in Supabase.
+- Tokenized unsubscribe links included in every broadcast email.
+- Optional welcome email after subscribe.
+- Admin email status endpoint.
+- Frontend `admin.html` email control panel.
+
+## New Worker endpoints
+
+```text
+GET  /admin/email/status
+POST /admin/email/test
+POST /admin/email/broadcast
+GET  /admin/campaigns
+```
+
+All admin endpoints require:
+
+```text
+Authorization: Bearer ADMIN_TOKEN
+```
 
 ## Static deployment
 
-Upload all root files directly to the `lknzmzd-xyz` GitHub repo root:
+Upload all root files directly to the `lknzmzd-xyz` GitHub repo root. Do not upload the ZIP as a nested folder.
+
+Important root files:
 
 ```text
 index.html
@@ -25,6 +43,8 @@ main.js
 systems.json
 updates.json
 subscribe.html
+unsubscribe.html
+admin.html
 updates.html
 status.html
 division.html
@@ -32,9 +52,7 @@ privacy.html
 backend/
 ```
 
-Do not upload the ZIP as a nested folder.
-
-## Backend deployment
+## Backend deployment/update
 
 Read:
 
@@ -42,40 +60,35 @@ Read:
 /backend/README.md
 ```
 
-Fast path:
+Fast path after V2.6 is already working:
 
-1. Run `/backend/supabase-signals-subscribers.sql` in Supabase SQL Editor.
-2. Deploy `/backend/worker-subscribe-template.js` as a Cloudflare Worker.
-3. Set Worker secrets:
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `IP_HASH_SECRET`
-4. Bind Worker custom domain:
+1. Run updated `/backend/supabase-signals-subscribers.sql` in Supabase SQL Editor.
+2. Add Resend API key only after your sending domain is verified.
+3. Keep `EMAIL_DRY_RUN=true` until test sends are proven.
+4. Deploy the Worker.
+5. Test `/admin/email/status`.
+6. Test `/admin/email/test`.
+7. Only then enable real sending and broadcast.
 
-```text
-signals.lknzmzd.xyz
-```
-
-5. Test:
+## Current production domains
 
 ```text
-https://signals.lknzmzd.xyz/health
+Frontend: https://lknzmzd.xyz
+Backend:  https://signals.lknzmzd.xyz
 ```
 
-## Current endpoint
+## Brutal rule
 
-The subscription form uses:
+Do not broadcast until these are proven:
 
 ```text
-https://signals.lknzmzd.xyz/subscribe
-```
-
-You can change this in `subscribe.html`:
-
-```html
-<meta name="signals-endpoint" content="https://signals.lknzmzd.xyz/subscribe" />
+/admin/email/status works
+/admin/email/test works
+unsubscribe link works
+Supabase campaign log appears
+Supabase delivery log appears
 ```
 
 ## Version
 
-`LKNZMZD.XYZ / V2.5.0`
+`LKNZMZD.XYZ / V2.7.0`

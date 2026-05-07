@@ -1,6 +1,6 @@
 {
-  "name": "LKNZMZD.XYZ V2.5 Signals Backend",
-  "short_name": "LKNZMZD V2.5",
+  "name": "LKNZMZD.XYZ V2.7 Signals Control",
+  "short_name": "LKNZMZD V2.7",
   "description": "Public systems gateway and signal feed for robotics, automation tools, AI workflows, project updates, and experimental infrastructure.",
   "start_url": "/?source=pwa",
   "scope": "/",

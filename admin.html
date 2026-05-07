@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>LKNZMZD Signals Admin</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="description" content="Private control surface for LKNZMZD Signals subscriber counts and export." />
+  <link rel="canonical" href="https://lknzmzd.xyz/admin.html" />
+  <meta name="theme-color" content="#02060a" />
+  <meta name="signals-endpoint" content="https://signals.lknzmzd.xyz/subscribe" />
+  <meta name="signals-base" content="https://signals.lknzmzd.xyz" />
+  <link rel="stylesheet" href="./style.css?v=2.7.0" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+</head>
+<body data-page="admin">
+  <canvas id="systemCanvas" aria-hidden="true"></canvas>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="scanline" aria-hidden="true"></div>
+
+  <header class="topbar" aria-label="LKNZMZD system header">
+    <a class="brand" href="./index.html" aria-label="LKNZMZD home">
+      <span class="brand-mark">L</span>
+      <span><strong>LKNZMZD.XYZ</strong><small>EMAIL CONTROL / V2.7</small></span>
+    </a>
+    <nav class="topnav" aria-label="Primary navigation">
+      <a href="./index.html#modules">Modules</a>
+      <a href="./updates.html">Signals</a>
+      <a href="./subscribe.html">Subscribe</a>
+      <a href="./privacy.html">Privacy</a>
+    </nav>
+    <div class="top-actions">
+      <button class="ghost-btn" id="openCommand" type="button"><span>CTRL</span><span>K</span></button>
+      <a class="primary-link" href="./updates.html">Signals</a>
+    </div>
+  </header>
+
+  <main class="doc-shell subscribe-shell">
+    <section class="doc-card subscribe-hero reveal">
+      <div class="eyebrow"><span class="pulse-dot"></span> SIG-ADMIN / EMAIL CONTROL SURFACE</div>
+      <h1>Subscriber + Email Control</h1>
+      <p class="lead">Protected control surface for subscriber counts, export, test sends, and controlled LKNZMZD Signals broadcasts. The browser page is static; protection lives inside the Worker <code>ADMIN_TOKEN</code>.</p>
+    </section>
+
+    <section class="subscribe-layout">
+      <form class="subscribe-form reveal" id="adminForm">
+        <label>
+          <span>Admin token</span>
+          <input name="adminToken" type="password" placeholder="Paste ADMIN_TOKEN" autocomplete="off" required />
+        </label>
+        <div class="admin-actions">
+          <button class="cta" type="button" id="adminLoadCounts">Load Counts</button>
+          <button class="secondary-cta" type="button" id="adminExportCsv">Export Active CSV</button>
+          <button class="secondary-cta" type="button" id="adminExportJson">Preview JSON</button>
+        </div>
+        <p class="form-note">Do not use this page on a shared computer. The token is read from the field only and is not saved permanently.</p>
+        <div id="adminOutput" class="subscribe-output admin-output" aria-live="polite"></div>
+        <hr class="soft-divider" />
+
+        <div class="email-control-block">
+          <div class="eyebrow">EMAIL SENDER / V2.7</div>
+          <label>
+            <span>Test recipient</span>
+            <input name="testTo" type="email" placeholder="you@example.com" autocomplete="email" />
+          </label>
+          <label>
+            <span>Subject</span>
+            <input name="emailSubject" type="text" placeholder="LKNZMZD Signals — new system update" maxlength="140" />
+          </label>
+          <label>
+            <span>Title</span>
+            <input name="emailTitle" type="text" placeholder="New signal published" maxlength="160" />
+          </label>
+          <label>
+            <span>Preheader</span>
+            <input name="emailPreheader" type="text" placeholder="Short inbox preview text" maxlength="220" />
+          </label>
+          <label>
+            <span>Message body</span>
+            <textarea name="emailBody" rows="8" placeholder="Write the update. Keep it sharp, useful, and specific."></textarea>
+          </label>
+          <div class="admin-two-col">
+            <label>
+              <span>CTA URL</span>
+              <input name="ctaUrl" type="url" placeholder="https://lknzmzd.xyz/updates.html" />
+            </label>
+            <label>
+              <span>CTA label</span>
+              <input name="ctaLabel" type="text" placeholder="Open Signals Feed" maxlength="80" />
+            </label>
+          </div>
+          <div class="admin-two-col">
+            <label>
+              <span>Broadcast limit</span>
+              <input name="broadcastLimit" type="number" min="1" max="100" value="50" />
+            </label>
+            <label>
+              <span>Broadcast confirmation</span>
+              <input name="broadcastConfirm" type="text" placeholder="SEND_LKNZMZD_SIGNAL" autocomplete="off" />
+            </label>
+          </div>
+          <div class="admin-actions">
+            <button class="secondary-cta" type="button" id="adminEmailStatus">Email Status</button>
+            <button class="secondary-cta" type="button" id="adminSendTest">Send Test</button>
+            <button class="cta danger-cta" type="button" id="adminSendBroadcast">Broadcast</button>
+            <button class="secondary-cta" type="button" id="adminLoadCampaigns">Campaigns</button>
+          </div>
+        </div>
+      </form>
+
+      <aside class="doctrine-card subscribe-side reveal">
+        <span class="eyebrow">CONTROL ENDPOINTS</span>
+        <h2>Send only after control exists.</h2>
+        <ul class="signal-benefits">
+          <li><code>/admin/email/status</code> checks sending configuration.</li>
+          <li><code>/admin/email/test</code> sends one test email.</li>
+          <li><code>/admin/email/broadcast</code> sends to active subscribers only.</li>
+          <li>Every broadcast email includes a tokenized unsubscribe link.</li>
+          <li>Campaign and delivery logs are stored in Supabase.</li>
+        </ul>
+      </aside>
+    </section>
+  </main>
+
+  <dialog class="command-dialog" id="commandDialog" aria-label="Command palette">
+    <div class="command-shell">
+      <div class="command-top"><span>COMMAND PALETTE</span><button type="button" id="closeCommand">×</button></div>
+      <input id="commandInput" type="text" autocomplete="off" spellcheck="false" placeholder="Type: signals, subscribe, unsubscribe, status, doctrine..." />
+      <div class="command-output" id="commandOutput"><p><b>ready</b> — private control mode.</p></div>
+    </div>
+  </dialog>
+  <script src="./main.js?v=2.7.0" type="module"></script>
+</body>
+</html>

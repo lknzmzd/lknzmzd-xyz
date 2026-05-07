@@ -109,14 +109,26 @@
   },
   {
     "id": "SIG-02",
-    "name": "Signals Backend",
+    "name": "Signals Backend + Email Layer",
     "layer": "backend",
-    "type": "Cloudflare Worker + Supabase",
-    "status": "BACKEND READY",
+    "type": "Cloudflare Worker + Supabase + Resend Layer",
+    "status": "EMAIL READY",
     "url": "./subscribe.html",
-    "description": "Subscription intake endpoint for LKNZMZD Signals, using a Worker API and Supabase subscriber storage.",
+    "description": "Subscription intake, unsubscribe handling, admin counts, export, campaign logs, delivery logs, and controlled Resend email sending.",
     "input": "email, interests, consent metadata",
-    "process": "validate, protect, upsert, log event",
-    "output": "active subscriber records"
+    "process": "validate, protect, upsert, unsubscribe, count, export, send, log",
+    "output": "controlled subscribers + campaign/delivery records + email signals"
+  },
+  {
+    "id": "SIG-03",
+    "name": "Email Control",
+    "layer": "backend",
+    "type": "Admin / Email Control Utility",
+    "status": "PROTECTED",
+    "url": "./admin.html",
+    "description": "Private static admin surface for subscriber control, test sends, campaigns, and guarded broadcasts using the Worker ADMIN_TOKEN.",
+    "input": "admin token, subscriber status filters, email message payloads",
+    "process": "authorize, count, export, test-send, broadcast, log deliveries",
+    "output": "CSV/JSON exports + test emails + controlled broadcasts"
   }
 ]

@@ -1,6 +1,6 @@
 name = "lknzmzd-signals-worker"
 main = "worker-subscribe-template.js"
-compatibility_date = "2025-08-01"
+compatibility_date = "2026-05-03"
 
 # Add the custom domain in the Cloudflare dashboard:
 # Workers & Pages → this Worker → Settings → Domains & Routes → Add Custom Domain
@@ -8,10 +8,21 @@ compatibility_date = "2025-08-01"
 
 [vars]
 ALLOWED_ORIGINS = "https://lknzmzd.xyz,https://www.lknzmzd.xyz"
+PUBLIC_SIGNALS_BASE = "https://signals.lknzmzd.xyz"
+EMAIL_FROM = "LKNZMZD Signals <signals@lknzmzd.xyz>"
+EMAIL_REPLY_TO = "ilkinazimzade@lknzmzd.com"
+EMAIL_SENDING_ENABLED = "false"
+EMAIL_DRY_RUN = "true"
+SEND_WELCOME_EMAIL = "false"
 
-# Set secrets with:
+# Required secrets:
 # wrangler secret put SUPABASE_URL
 # wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 # wrangler secret put IP_HASH_SECRET
+# wrangler secret put ADMIN_TOKEN
+#
+# Required only when real sending is enabled:
+# wrangler secret put RESEND_API_KEY
+#
 # Optional later:
 # wrangler secret put TURNSTILE_SECRET_KEY

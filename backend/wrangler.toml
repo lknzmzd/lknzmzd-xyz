@@ -1,0 +1,12 @@
+﻿name = "lknzmzd-signals-worker"
+main = "worker-subscribe-template.js"
+compatibility_date = "2026-05-03"
+
+[vars]
+ALLOWED_ORIGINS = "https://lknzmzd.xyz,https://www.lknzmzd.xyz"
+PUBLIC_SIGNALS_BASE = "https://signals.lknzmzd.xyz"
+EMAIL_FROM = "LKNZMZD Signals <signals@lknzmzd.xyz>"
+EMAIL_REPLY_TO = "ilkinazimzade@lknzmzd.com"
+EMAIL_SENDING_ENABLED = "false"
+EMAIL_DRY_RUN = "true"
+SEND_WELCOME_EMAIL = "false"
