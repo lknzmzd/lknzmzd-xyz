@@ -313,6 +313,14 @@ function renderSignalEmail({ title, preheader, bodyText, ctaUrl, ctaLabel, unsub
           <div>You received this because you subscribed to LKNZMZD Signals.</div>
           <div><a href="${safeUnsub}" style="color:#78eaff;">Unsubscribe from LKNZMZD Signals</a></div>
           <div style="margin-top:10px;">LKNZMZD.XYZ — robotics, AI systems, tooling, and build logs.</div>
+          <div style="margin-top:10px;">
+            <a href="https://lknzmzd.xyz" style="color:#78eaff;">Main Website</a>
+            · <a href="https://lknzmzd.com" style="color:#78eaff;">Engineering Lab</a>
+            · <a href="https://instagram.com/lknzmzdx" style="color:#78eaff;">Instagram</a>
+            · <a href="https://instagram.com/lknzmzdlab" style="color:#78eaff;">Lab Instagram</a>
+            · <a href="https://instagram.com/noctivis.lab" style="color:#78eaff;">Noctivis</a>
+            · <a href="https://youtube.com/@Lknzmzd" style="color:#78eaff;">YouTube</a>
+          </div>
         </td></tr>
       </table>
     </td></tr>
@@ -504,10 +512,21 @@ async function handleSubscribe(request, env) {
   if (String(env.SEND_WELCOME_EMAIL || "false").toLowerCase() === "true" && eventType !== "update") {
     const unsubscribeUrl = `${getSignalsBase(env)}/unsubscribe?email=${encodeURIComponent(email)}&token=${encodeURIComponent(unsubscribeToken)}`;
     const template = {
-      subject: "LKNZMZD Signals subscription active",
-      title: "Signal channel opened",
-      preheader: "You are now subscribed to LKNZMZD Signals.",
-      bodyText: "Your LKNZMZD Signals subscription is active. You will receive project updates, build logs, tool releases, robotics experiments, and AI system notes when new signals go live.",
+      subject: "Your LKNZMZD Signals subscription is active",
+      title: "Thanks — your signal channel is active",
+      preheader: "Your email was submitted successfully to LKNZMZD Signals.",
+      bodyText:
+        "Your email was submitted successfully.\n\n" +
+        "You are now subscribed to LKNZMZD Signals. You will receive selected updates about robotics builds, AI systems, internal tools, field-engineering notes, and project releases when new signals go live.\n\n" +
+        "Main system gateway: https://lknzmzd.xyz\n" +
+        "Signals archive: https://lknzmzd.xyz/updates.html\n" +
+        "Engineering lab: https://lknzmzd.com\n\n" +
+        "Social channels:\n" +
+        "Instagram: https://instagram.com/lknzmzdx\n" +
+        "Lab Instagram: https://instagram.com/lknzmzdlab\n" +
+        "Noctivis Lab: https://instagram.com/noctivis.lab\n" +
+        "YouTube: https://youtube.com/@Lknzmzd\n\n" +
+        "You can unsubscribe anytime using the link at the bottom of this email.",
       ctaUrl: "https://lknzmzd.xyz/updates.html",
       ctaLabel: "Open Signals Feed"
     };
@@ -852,33 +871,53 @@ async function handleAdminCampaigns(request, env, url) {
 
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
+    try {
+      const url = new URL(request.url);
 
-    if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: getCorsHeaders(request, env) });
-    }
+      if (request.method === "OPTIONS") {
+        return new Response(null, { status: 204, headers: getCorsHeaders(request, env) });
+      }
 
-    if (url.pathname === "/health" && request.method === "GET") {
+      if (url.pathname === "/health" && request.method === "GET") {
+        return json({
+          ok: true,
+          service: "lknzmzd-signals-worker",
+          version: VERSION,
+          endpoints: [
+            "/count",
+            "/subscribe",
+            "/unsubscribe",
+            "/admin/counts",
+            "/admin/export",
+            "/admin/subscribers",
+            "/admin/campaigns",
+            "/admin/email/status",
+            "/admin/email/test",
+            "/admin/email/broadcast"
+          ]
+        }, 200, request, env);
+      }
+
+      if (url.pathname === "/count" && request.method === "GET") return handleCount(request, env);
+      if (url.pathname === "/subscribe" && request.method === "POST") return handleSubscribe(request, env);
+      if (url.pathname === "/unsubscribe" && request.method === "POST") return handleUnsubscribePost(request, env);
+      if (url.pathname === "/unsubscribe" && request.method === "GET") return handleUnsubscribeGet(request, env, url);
+      if (url.pathname === "/admin/counts" && request.method === "GET") return handleAdminCounts(request, env);
+      if (url.pathname === "/admin/subscribers" && request.method === "GET") return handleAdminSubscribers(request, env, url);
+      if (url.pathname === "/admin/export" && request.method === "GET") return handleAdminExport(request, env, url);
+      if (url.pathname === "/admin/campaigns" && request.method === "GET") return handleAdminCampaigns(request, env, url);
+      if (url.pathname === "/admin/email/status" && request.method === "GET") return handleAdminEmailStatus(request, env);
+      if (url.pathname === "/admin/email/test" && request.method === "POST") return handleAdminEmailTest(request, env);
+      if (url.pathname === "/admin/email/broadcast" && request.method === "POST") return handleAdminEmailBroadcast(request, env);
+
+      return json({ ok: false, error: "Not found" }, 404, request, env);
+    } catch (error) {
       return json({
-        ok: true,
-        service: "lknzmzd-signals-worker",
-        version: VERSION,
-        endpoints: ["/count", "/subscribe", "/unsubscribe", "/admin/counts", "/admin/export", "/admin/subscribers", "/admin/campaigns", "/admin/email/status", "/admin/email/test", "/admin/email/broadcast"]
-      }, 200, request, env);
+        ok: false,
+        error: "Worker runtime error",
+        message: error && error.message ? error.message : String(error),
+        version: VERSION
+      }, 500, request, env);
     }
-
-    if (url.pathname === "/count" && request.method === "GET") return handleCount(request, env);
-    if (url.pathname === "/subscribe" && request.method === "POST") return handleSubscribe(request, env);
-    if (url.pathname === "/unsubscribe" && request.method === "POST") return handleUnsubscribePost(request, env);
-    if (url.pathname === "/unsubscribe" && request.method === "GET") return handleUnsubscribeGet(request, env, url);
-    if (url.pathname === "/admin/counts" && request.method === "GET") return handleAdminCounts(request, env);
-    if (url.pathname === "/admin/subscribers" && request.method === "GET") return handleAdminSubscribers(request, env, url);
-    if (url.pathname === "/admin/export" && request.method === "GET") return handleAdminExport(request, env, url);
-    if (url.pathname === "/admin/campaigns" && request.method === "GET") return handleAdminCampaigns(request, env, url);
-    if (url.pathname === "/admin/email/status" && request.method === "GET") return handleAdminEmailStatus(request, env);
-    if (url.pathname === "/admin/email/test" && request.method === "POST") return handleAdminEmailTest(request, env);
-    if (url.pathname === "/admin/email/broadcast" && request.method === "POST") return handleAdminEmailBroadcast(request, env);
-
-    return json({ ok: false, error: "Not found" }, 404, request, env);
   }
 };
