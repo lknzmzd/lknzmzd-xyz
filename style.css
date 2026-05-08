@@ -713,3 +713,85 @@ h1{
     grid-template-columns: 1fr;
   }
 }
+
+/* V2.7.1 Subscribe polish */
+.form-tip {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(120, 234, 255, 0.16);
+  border-radius: 16px;
+  background: rgba(120, 234, 255, 0.055);
+  color: rgba(225, 244, 255, 0.78);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.success-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.success-actions a,
+.form-trust-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 9px 12px;
+  border: 1px solid rgba(120, 234, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.success-actions a:hover,
+.form-trust-links a:hover {
+  border-color: rgba(120, 234, 255, 0.45);
+  background: rgba(120, 234, 255, 0.08);
+}
+
+.form-trust-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.cta.is-loading {
+  opacity: 0.78;
+  cursor: wait;
+  filter: saturate(0.85);
+}
+
+.subscribe-output .form-success,
+.subscribe-output .form-error,
+.subscribe-output .form-pending {
+  margin: 0;
+  padding: 14px 15px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.subscribe-output .form-success {
+  border-color: rgba(166, 255, 203, 0.2);
+  background: rgba(166, 255, 203, 0.055);
+}
+
+.subscribe-output .form-error {
+  border-color: rgba(255, 92, 122, 0.25);
+  background: rgba(255, 92, 122, 0.055);
+}
+
+.subscribe-output .form-pending {
+  border-color: rgba(120, 234, 255, 0.22);
+  background: rgba(120, 234, 255, 0.055);
+}

@@ -729,12 +729,21 @@ function initSubscribeForm() {
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+
     const formData = new FormData(form);
     const email = String(formData.get("email") || "").trim().toLowerCase();
     const interests = formData.getAll("interests").map(String);
     const honeypot = String(formData.get("company") || "").trim();
     const consent = formData.get("consent") === "yes";
     const submitButton = form.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton ? submitButton.textContent : "Subscribe to Signals";
+
+    function setButtonLoading(isLoading) {
+      if (!submitButton) return;
+      submitButton.disabled = isLoading;
+      submitButton.classList.toggle("is-loading", isLoading);
+      submitButton.textContent = isLoading ? "Submitting..." : originalButtonText;
+    }
 
     if (honeypot) {
       output.innerHTML = `<p class="form-error">Bot check failed. Submission ignored.</p>`;
@@ -742,7 +751,7 @@ function initSubscribeForm() {
     }
 
     if (!/^\S+@\S+\.\S+$/.test(email)) {
-      output.innerHTML = `<p class="form-error">Invalid email format. Fix the input before sending signal access.</p>`;
+      output.innerHTML = `<p class="form-error">Invalid email format. Check the address and try again.</p>`;
       return;
     }
 
@@ -754,7 +763,7 @@ function initSubscribeForm() {
     const payload = {
       email,
       interests: interests.length ? interests : ["All Updates"],
-      source: "lknzmzd.xyz/v2.7-signals",
+      source: "lknzmzd.xyz/v2.7.1-signals",
       consent_version: "signals-v1",
       referrer: document.referrer || "direct",
       created_at: new Date().toISOString()
@@ -762,23 +771,66 @@ function initSubscribeForm() {
 
     if (SIGNALS_ENDPOINT) {
       try {
-        output.innerHTML = `<p class="form-pending">Transmitting signal subscription...</p>`;
-        if (submitButton) submitButton.disabled = true;
+        output.innerHTML = `<p class="form-pending">Activating signal subscription...</p>`;
+        setButtonLoading(true);
+
         const response = await fetch(SIGNALS_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
+
         const result = await response.json().catch(() => ({}));
-        if (!response.ok || result.ok === false) throw new Error(result.error || `Endpoint returned ${response.status}`);
-        const modeText = result.mode === "resubscribe" ? "Subscription reactivated." : result.duplicate ? "Subscription updated." : "Signal subscription received.";
-        output.innerHTML = `<p class="form-success"><b>${escapeHtml(modeText)}</b> Backend accepted the request. Mode: <code>${escapeHtml(result.mode || "subscribe")}</code>.</p>`;
+
+        if (!response.ok || result.ok === false) {
+          throw new Error(result.error || `Endpoint returned ${response.status}`);
+        }
+
+        const mode = result.mode || "subscribe";
+        const duplicate = Boolean(result.duplicate);
+
+        let title = "Signal access confirmed.";
+        let detail = "Your subscription is active. A confirmation email has been sent — check your inbox, and if needed, your spam or promotions folder.";
+
+        if (mode === "resubscribe") {
+          title = "Signal access reactivated.";
+          detail = "Your subscription is active again. A confirmation email has been sent — check your inbox, and if needed, your spam or promotions folder.";
+        }
+
+        if (duplicate || mode === "update") {
+          title = "Subscription preferences updated.";
+          detail = "This email was already subscribed, so the selected signal channels were updated. If you recently subscribed, check the confirmation email already sent to your inbox or spam/promotions folder.";
+        }
+
+        output.innerHTML = `
+          <div class="form-success">
+            <p><b>${escapeHtml(title)}</b> ${escapeHtml(detail)}</p>
+            <div class="success-actions">
+              <a href="./updates.html">Open Signals Archive</a>
+              <a href="./index.html">Return to Gateway</a>
+              <a href="./unsubscribe.html">Unsubscribe Control</a>
+            </div>
+          </div>
+        `;
+
         form.reset();
+
+        const allUpdates = form.querySelector('input[name="interests"][value="All Updates"]');
+        if (allUpdates) allUpdates.checked = true;
+
+        const consentBox = form.querySelector('input[name="consent"]');
+        if (consentBox) consentBox.checked = false;
+
         return;
       } catch (error) {
-        output.innerHTML = `<p class="form-error">Backend endpoint failed: ${escapeHtml(error.message || "unknown error")}. Static fallback prepared below.</p>`;
+        output.innerHTML = `
+          <p class="form-error">
+            Subscription endpoint failed: ${escapeHtml(error.message || "unknown error")}.
+            Try again in a few minutes. If it still fails, contact ${escapeHtml(SIGNALS_CONTACT_EMAIL)}.
+          </p>
+        `;
       } finally {
-        if (submitButton) submitButton.disabled = false;
+        setButtonLoading(false);
       }
     }
 
@@ -791,9 +843,8 @@ function initSubscribeForm() {
     const mailto = `mailto:${SIGNALS_CONTACT_EMAIL}?subject=${subject}&body=${body}`;
 
     output.innerHTML = `
-      <p class="form-success"><b>Static intake staged.</b> This GitHub Pages site has no database yet. Click the fallback link to send the subscription request by email.</p>
+      <p class="form-error"><b>Live intake is unavailable.</b> Use the fallback link below to send the subscription request manually.</p>
       <a class="module-link subscribe-mailto" href="${mailto}"><span>SEND SUBSCRIPTION REQUEST</span><span>→</span></a>
-      <p class="form-note">V2.7 is configured for a Cloudflare Worker + Supabase backend. If the Worker is not deployed yet, this fallback still lets you capture the request manually.</p>
     `;
   });
 }

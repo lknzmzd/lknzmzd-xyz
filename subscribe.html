@@ -3,20 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
   <title>Subscribe to LKNZMZD Signals</title>
   <meta name="description" content="Subscribe to LKNZMZD Signals for project updates, robotics builds, AI workflow notes, tooling releases, and field-engineering changes." />
   <link rel="canonical" href="https://lknzmzd.xyz/subscribe.html" />
+
   <meta name="theme-color" content="#02060a" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Subscribe to LKNZMZD Signals" />
   <meta property="og:description" content="Receive system signals when new tools, robotics builds, AI workflows, or field-engineering updates go live." />
   <meta property="og:url" content="https://lknzmzd.xyz/subscribe.html" />
   <meta property="og:image" content="https://lknzmzd.xyz/assets/og-lknzmzd.png" />
+
   <meta name="signals-endpoint" content="https://signals.lknzmzd.xyz/subscribe" />
   <meta name="signals-base" content="https://signals.lknzmzd.xyz" />
-  <link rel="stylesheet" href="./style.css?v=2.7.0" />
+
+  <link rel="stylesheet" href="./style.css?v=2.7.1" />
   <link rel="manifest" href="./manifest.webmanifest" />
 </head>
+
 <body data-page="subscribe">
   <canvas id="systemCanvas" aria-hidden="true"></canvas>
   <div class="noise" aria-hidden="true"></div>
@@ -25,25 +30,39 @@
   <header class="topbar" aria-label="LKNZMZD system header">
     <a class="brand" href="./index.html" aria-label="LKNZMZD home">
       <span class="brand-mark">L</span>
-      <span><strong>LKNZMZD.XYZ</strong><small>SIGNAL CONTROL / V2.7</small></span>
+      <span>
+        <strong>LKNZMZD.XYZ</strong>
+        <small>SIGNAL CONTROL / V2.7.1</small>
+      </span>
     </a>
+
     <nav class="topnav" aria-label="Primary navigation">
       <a href="./index.html#modules">Modules</a>
       <a href="./updates.html">Signals</a>
       <a href="./status.html">Status</a>
       <a href="./division.html">Doctrine</a>
     </nav>
+
     <div class="top-actions">
-      <button class="ghost-btn" id="openCommand" type="button"><span>CTRL</span><span>K</span></button>
+      <button class="ghost-btn" id="openCommand" type="button" aria-label="Open command palette">
+        <span>CTRL</span><span>K</span>
+      </button>
       <a class="primary-link" href="./updates.html">Signals</a>
     </div>
   </header>
 
   <main class="doc-shell subscribe-shell">
     <section class="doc-card subscribe-hero reveal">
-      <div class="eyebrow"><span class="pulse-dot"></span> SIG-02 / SUBSCRIPTION INTAKE</div>
+      <div class="eyebrow">
+        <span class="pulse-dot"></span> SIG-02 / SUBSCRIPTION INTAKE
+      </div>
+
       <h1>Subscribe to Signals</h1>
-      <p class="lead">Receive system signals when new tools, robotics builds, AI workflows, field-engineering notes, or project releases go live.</p>
+
+      <p class="lead">
+        Receive system signals when new tools, robotics builds, AI workflows,
+        field-engineering notes, or project releases go live.
+      </p>
     </section>
 
     <section class="subscribe-layout">
@@ -51,8 +70,15 @@
         <div class="form-grid">
           <label>
             <span>Email</span>
-            <input name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+            <input
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            />
           </label>
+
           <label class="hp-field" aria-hidden="true">
             <span>Company</span>
             <input name="company" type="text" tabindex="-1" autocomplete="off" />
@@ -61,46 +87,107 @@
 
         <fieldset>
           <legend>Signal channels</legend>
-          <label><input type="checkbox" name="interests" value="Robotics" /> Robotics</label>
-          <label><input type="checkbox" name="interests" value="AI Systems" /> AI Systems</label>
-          <label><input type="checkbox" name="interests" value="Tools" /> Tools</label>
-          <label><input type="checkbox" name="interests" value="Field Engineering" /> Field Engineering</label>
-          <label><input type="checkbox" name="interests" value="Build Logs" /> Build Logs</label>
-          <label><input type="checkbox" name="interests" value="All Updates" checked /> All Updates</label>
+
+          <label>
+            <input type="checkbox" name="interests" value="Robotics" />
+            Robotics
+          </label>
+
+          <label>
+            <input type="checkbox" name="interests" value="AI Systems" />
+            AI Systems
+          </label>
+
+          <label>
+            <input type="checkbox" name="interests" value="Tools" />
+            Tools
+          </label>
+
+          <label>
+            <input type="checkbox" name="interests" value="Field Engineering" />
+            Field Engineering
+          </label>
+
+          <label>
+            <input type="checkbox" name="interests" value="Build Logs" />
+            Build Logs
+          </label>
+
+          <label>
+            <input type="checkbox" name="interests" value="All Updates" checked />
+            All Updates
+          </label>
         </fieldset>
 
         <label class="consent-row">
           <input type="checkbox" name="consent" value="yes" required />
-          <span>I agree to store my email and selected interests for LKNZMZD Signals updates. I can request removal anytime.</span>
+          <span>
+            I agree to store my email and selected interests for LKNZMZD Signals
+            updates. I can unsubscribe or request removal anytime.
+          </span>
         </label>
 
-        <button class="cta wide" type="submit">Request Signal Access</button>
-        <p class="form-note">Backend mode: this form posts to <code>https://signals.lknzmzd.xyz/subscribe</code>. V2.7 supports duplicate updates, resubscribe, and self-service unsubscribe.</p>
+        <button class="cta wide" type="submit">Subscribe to Signals</button>
+
+        <p class="form-tip">
+          After subscribing, check your inbox for the confirmation email.
+          If you don’t see it within a few minutes, check your spam or promotions folder.
+        </p>
+
+        <p class="form-note">
+          You can unsubscribe anytime using the link inside the confirmation email
+          or through the unsubscribe control.
+        </p>
+
         <div id="subscribeOutput" class="subscribe-output" aria-live="polite"></div>
       </form>
 
       <aside class="doctrine-card subscribe-side reveal">
-        <span class="eyebrow">BACKEND STATUS</span>
-        <h2>Static page. Real intake.</h2>
+        <span class="eyebrow">DELIVERY STATUS</span>
+
+        <h2>Live intake. Confirmed delivery.</h2>
+
         <ul class="signal-benefits">
-          <li>Frontend stays on GitHub Pages.</li>
           <li>Subscription API runs on Cloudflare Worker.</li>
-          <li>Subscriber rows are stored in Supabase.</li>
-          <li>Honeypot + CORS + optional Turnstile are prepared.</li>
-          <li>Static fallback remains if the endpoint is down.</li>
+          <li>Subscriber records are stored in Supabase.</li>
+          <li>Confirmation emails are sent through Resend.</li>
+          <li>Every subscriber can unsubscribe anytime.</li>
+          <li>If the confirmation email is not visible, check spam or promotions.</li>
         </ul>
-        <a class="text-link" href="./updates.html">Review signal archive →</a><br/><a class="text-link" href="./unsubscribe.html">Unsubscribe control →</a>
+
+        <div class="form-trust-links">
+          <a class="text-link" href="./updates.html">Review signal archive →</a>
+          <a class="text-link" href="./unsubscribe.html">Unsubscribe control →</a>
+          <a class="text-link" href="./index.html">Return to gateway →</a>
+        </div>
       </aside>
     </section>
   </main>
 
   <dialog class="command-dialog" id="commandDialog" aria-label="Command palette">
     <div class="command-shell">
-      <div class="command-top"><span>COMMAND PALETTE</span><button type="button" id="closeCommand">×</button></div>
-      <input id="commandInput" type="text" autocomplete="off" spellcheck="false" placeholder="Type: open lab, signals, subscribe, status, doctrine, help..." />
-      <div class="command-output" id="commandOutput"><p><b>ready</b> — try <code>open lab</code>, <code>signals</code>, <code>subscribe</code>, or <code>help</code>.</p></div>
+      <div class="command-top">
+        <span>COMMAND PALETTE</span>
+        <button type="button" id="closeCommand" aria-label="Close command palette">×</button>
+      </div>
+
+      <input
+        id="commandInput"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="Type: open lab, signals, subscribe, status, doctrine, help..."
+      />
+
+      <div class="command-output" id="commandOutput">
+        <p>
+          <b>ready</b> — try <code>open lab</code>, <code>signals</code>,
+          <code>subscribe</code>, or <code>help</code>.
+        </p>
+      </div>
     </div>
   </dialog>
-  <script src="./main.js?v=2.7.0" type="module"></script>
+
+  <script src="./main.js?v=2.7.1" type="module"></script>
 </body>
 </html>
